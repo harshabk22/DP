@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiet Precision — Museum Canvas</title>
+  <style>
+    @page {
+      size: 2400px 1500px;
+      margin: 0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 2400px;
+      height: 1500px;
+      background-color: #030508;
+      color: #E2E8F0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+      overflow: hidden;
+      position: relative;
+      padding: 100px 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Ambient Spatial Illumination */
+    .ambient-glow {
+      position: absolute;
+      width: 900px;
+      height: 900px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, rgba(3, 5, 8, 0) 70%);
+      top: -200px;
+      right: 100px;
+      pointer-events: none;
+    }
+    .ambient-glow-2 {
+      position: absolute;
+      width: 800px;
+      height: 800px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.06) 0%, rgba(3, 5, 8, 0) 70%);
+      bottom: -150px;
+      left: 200px;
+      pointer-events: none;
+    }
+
+    /* Grid and Systematic Reference Markers */
+    .grid-lines {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: 
+        linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 80px 80px;
+      pointer-events: none;
+    }
+
+    .corner-mark {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .top-left { top: 40px; left: 40px; border-top: 1.5px solid; border-left: 1.5px solid; }
+    .top-right { top: 40px; right: 40px; border-top: 1.5px solid; border-right: 1.5px solid; }
+    .bottom-left { bottom: 40px; left: 40px; border-bottom: 1.5px solid; border-left: 1.5px solid; }
+    .bottom-right { bottom: 40px; right: 40px; border-bottom: 1.5px solid; border-right: 1.5px solid; }
+
+    /* Canvas Header */
+    header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 40px;
+    }
+
+    .header-left .movement-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #38BDF8;
+      margin-bottom: 14px;
+    }
+
+    .header-left h1 {
+      font-size: 64px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      background: linear-gradient(180deg, #FFFFFF 30%, #94A3B8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-right {
+      text-align: right;
+      font-family: -apple-system, monospace;
+      font-size: 13px;
+      color: #64748B;
+      line-height: 1.8;
+      letter-spacing: 0.05em;
+    }
+
+    /* Central Scientific Geometry */
+    .center-canvas {
+      position: relative;
+      z-index: 10;
+      height: 840px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 36px;
+      align-items: center;
+      margin: 30px 0;
+    }
+
+    .monolith-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 28px;
+      height: 760px;
+      padding: 44px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-ref {
+      font-family: -apple-system, monospace;
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      color: #475569;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .card-hero-figure {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .figure-svg {
+      width: 100%;
+      height: 380px;
+    }
+
+    .card-meta {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 24px;
+    }
+
+    .card-meta-title {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #FFF;
+      margin-bottom: 8px;
+    }
+
+    .card-meta-desc {
+      font-size: 14px;
+      color: #94A3B8;
+      line-height: 1.5;
+    }
+
+    /* Canvas Footer */
+    footer {
+      position: relative;
+      z-index: 10;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: #475569;
+      letter-spacing: 0.05em;
+    }
+
+    .footer-left {
+      display: flex;
+      gap: 32px;
+    }
+
+    .spec-item strong {
+      color: #CBD5E1;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient light -->
+  <div class="ambient-glow"></div>
+  <div class="ambient-glow-2"></div>
+  <div class="grid-lines"></div>
+
+  <!-- Systematic Registration Crosses -->
+  <div class="corner-mark top-left"></div>
+  <div class="corner-mark top-right"></div>
+  <div class="corner-mark bottom-left"></div>
+  <div class="corner-mark bottom-right"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="header-left">
+      <div class="movement-title">Quiet Precision // System Atlas</div>
+      <h1>MessMate Dietary Intelligence</h1>
+    </div>
+    <div class="header-right">
+      <div>SPECIFICATION: v2.0 OPEN-WORLD</div>
+      <div>CORE DAG LATENCY: &lt; 442 MS</div>
+      <div>VLM PROTOCOL: DETERMINISTIC (K=1, T=0.0)</div>
+      <div>INVARIANT: I1 ZERO-NUTRIENT ESTIMATION</div>
+    </div>
+  </header>
+
+  <!-- Central 4-Column Monolith Architecture -->
+  <main class="center-canvas">
+
+    <!-- Column 1: Optical Scale Recovery -->
+    <div class="monolith-card">
+      <div class="card-ref">
+        <span>REF 01</span>
+        <span>OPTICAL PINNING</span>
+      </div>
+      <div class="card-hero-figure">
+        <svg class="figure-svg" viewBox="0 0 400 400">
+          <circle cx="200" cy="200" r="140" fill="none" stroke="rgba(56, 189, 248, 0.15)" stroke-width="1.5" stroke-dasharray="4,4"/>
+          <ellipse cx="200" cy="200" rx="140" ry="85" fill="none" stroke="#38BDF8" stroke-width="2.5"/>
+          <line x1="60" y1="200" x2="340" y2="200" stroke="rgba(56, 189, 248, 0.4)" stroke-width="1.5"/>
+          <line x1="200" y1="115" x2="200" y2="285" stroke="rgba(56, 189, 248, 0.4)" stroke-width="1.5"/>
+          <circle cx="200" cy="200" r="6" fill="#38BDF8"/>
+          <!-- Perspective projection rays -->
+          <line x1="200" y1="40" x2="60" y2="200" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <line x1="200" y1="40" x2="340" y2="200" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <circle cx="200" cy="40" r="4" fill="#FFF"/>
+          <text x="200" y="32" fill="#64748B" font-size="11" font-family="monospace" text-anchor="middle">CIPA EXIF FOCAL ANCHOR</text>
+          <text x="200" y="340" fill="#94A3B8" font-size="12" font-family="monospace" text-anchor="middle">CONIC ELLIPSE FIT: e = 0.79</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-meta-title">The Metric Camera</div>
+        <div class="card-meta-desc">Android hardware captures focal length and projective rim invariants, grounding 2D pixels in true 3D metric scale.</div>
+      </div>
+    </div>
+
+    <!-- Column 2: Tableware Re-ID (DINOv2) -->
+    <div class="monolith-card">
+      <div class="card-ref">
+        <span>REF 02</span>
+        <span>VISUAL RE-ID</span>
+      </div>
+      <div class="card-hero-figure">
+        <svg class="figure-svg" viewBox="0 0 400 400">
+          <!-- 384-d feature lattice representation -->
+          <g transform="translate(60, 60)">
+            <rect width="280" height="280" rx="16" fill="rgba(16, 185, 129, 0.03)" stroke="rgba(16, 185, 129, 0.2)" stroke-width="1.5"/>
+            <!-- Concentric neural activation arcs -->
+            <circle cx="140" cy="140" r="100" fill="none" stroke="rgba(16, 185, 129, 0.15)" stroke-width="1"/>
+            <circle cx="140" cy="140" r="70" fill="none" stroke="rgba(16, 185, 129, 0.25)" stroke-width="1.5"/>
+            <circle cx="140" cy="140" r="40" fill="none" stroke="#10B981" stroke-width="2"/>
+            <circle cx="140" cy="140" r="8" fill="#34D399"/>
+            <!-- Vector spikes -->
+            <line x1="140" y1="40" x2="140" y2="240" stroke="rgba(16, 185, 129, 0.4)" stroke-width="1"/>
+            <line x1="40" y1="140" x2="240" y2="140" stroke="rgba(16, 185, 129, 0.4)" stroke-width="1"/>
+            <line x1="69" y1="69" x2="211" y2="211" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1"/>
+            <line x1="69" y1="211" x2="211" y2="69" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1"/>
+          </g>
+          <text x="200" y="370" fill="#10B981" font-size="12" font-family="monospace" text-anchor="middle">COSINE SIMILARITY &ge; 0.85</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-meta-title">Tableware Fingerprint</div>
+        <div class="card-meta-desc">Self-supervised DINOv2 recognizes your personal bowl across weeks, separating vessel volume from visual noise.</div>
+      </div>
+    </div>
+
+    <!-- Column 3: The Verified Chemistry Ledger -->
+    <div class="monolith-card">
+      <div class="card-ref">
+        <span>REF 03</span>
+        <span>CHEMICAL TRUTH</span>
+      </div>
+      <div class="card-hero-figure">
+        <svg class="figure-svg" viewBox="0 0 400 400">
+          <!-- Conformal prediction distribution curve -->
+          <path d="M 40 300 Q 140 300, 170 200 T 200 90 T 230 200 Q 260 300, 360 300" fill="rgba(168, 85, 247, 0.08)" stroke="#A855F7" stroke-width="2.5"/>
+          <!-- Shaded 90% conformal band -->
+          <rect x="150" y="100" width="100" height="200" fill="rgba(168, 85, 247, 0.15)" stroke="rgba(168, 85, 247, 0.3)" stroke-dasharray="2,2"/>
+          <line x1="200" y1="90" x2="200" y2="300" stroke="#FFF" stroke-width="1.5"/>
+          <circle cx="200" cy="90" r="5" fill="#FFF"/>
+          <text x="150" y="325" fill="#64748B" font-size="11" font-family="monospace" text-anchor="middle">p10: 502</text>
+          <text x="200" y="325" fill="#A855F7" font-size="12" font-family="monospace" font-weight="bold" text-anchor="middle">&mu;: 612 kcal</text>
+          <text x="250" y="325" fill="#64748B" font-size="11" font-family="monospace" text-anchor="middle">p90: 728</text>
+          <text x="200" y="50" fill="#94A3B8" font-size="11" font-family="monospace" text-anchor="middle">LABORATORY COMPOSITION (USDA + IFCT)</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-meta-title">Conformal Nutrition</div>
+        <div class="card-meta-desc">Zero LLM hallucinations. Calories are mathematically integrated from chemical databases with honest uncertainty bounds.</div>
+      </div>
+    </div>
+
+    <!-- Column 4: Attention Allocator (T+20m) -->
+    <div class="monolith-card">
+      <div class="card-ref">
+        <span>REF 04</span>
+        <span>AMBIENT VoI</span>
+      </div>
+      <div class="card-hero-figure">
+        <svg class="figure-svg" viewBox="0 0 400 400">
+          <!-- Time delay axis and decay curve -->
+          <circle cx="200" cy="180" r="110" fill="none" stroke="rgba(245, 158, 11, 0.15)" stroke-width="1.5"/>
+          <circle cx="200" cy="180" r="80" fill="none" stroke="rgba(245, 158, 11, 0.3)" stroke-width="2"/>
+          <circle cx="200" cy="180" r="50" fill="none" stroke="#F59E0B" stroke-width="2.5"/>
+          <!-- Clock hand pointing to T+20 -->
+          <line x1="200" y1="180" x2="245" y2="155" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="200" cy="180" r="6" fill="#F59E0B"/>
+          <!-- Notification Pill -->
+          <rect x="80" y="270" width="240" height="50" rx="14" fill="#1E293B" stroke="rgba(245, 158, 11, 0.5)" stroke-width="1.5"/>
+          <text x="200" y="300" fill="#FFF" font-size="12" font-family="monospace" text-anchor="middle">1 TAP: [ 2 ROTIS ]</text>
+          <text x="200" y="50" fill="#F59E0B" font-size="12" font-family="monospace" text-anchor="middle">AMBIENT INTERVAL: T+20 MIN</text>
+        </svg>
+      </div>
+      <div class="card-meta">
+        <div class="card-meta-title">The Polite Host</div>
+        <div class="card-meta-desc">Value-of-Information limits interrupts to &le;3/day. Prompts arrive post-meal, driving friction to zero by Day 14.</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer Specifications -->
+  <footer>
+    <div class="footer-left">
+      <div class="spec-item">FRAMEWORK: <strong>FastAPI / Python 3.11</strong></div>
+      <div class="spec-item">CLIENT: <strong>Kotlin 17 / Android SDK 36</strong></div>
+      <div class="spec-item">EMBEDDING: <strong>FastEmbed 384-D HNSW</strong></div>
+      <div class="spec-item">UNIT COGS: <strong>&lt; $0.11 / USER / MONTH</strong></div>
+    </div>
+    <div>MESSMATE OPEN-WORLD ARCHITECTURE • MUSEUM REPRODUCIBLE EDITION</div>
+  </footer>
+
+</body>
+</html>

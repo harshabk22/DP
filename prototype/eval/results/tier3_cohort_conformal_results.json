@@ -1,0 +1,38 @@
+{
+  "cohort_tier": "Tier 3 \u2014 In-Silico Synthetic Household Scale Cohort (\u00a713.3)",
+  "evaluation_type": "in_silico_monte_carlo_validation",
+  "disclaimer": "NOTICE: This evaluation harness executes in-silico Monte Carlo simulations across parameterized food distributions and synthetic personas. These results validate algorithmic mechanics and mathematical convergence; they do not represent clinical human trial outcomes.",
+  "num_households": 18,
+  "duration_days": 14,
+  "total_meals_logged": 756,
+  "bland_altman": {
+    "week1_uncalibrated": {
+      "mean_bias_kcal": 1.4,
+      "sd_bias_kcal": 148.8,
+      "loa_lower_kcal": -290.2,
+      "loa_upper_kcal": 293.0,
+      "loa_width_kcal": 583.1
+    },
+    "week2_calibrated": {
+      "mean_bias_kcal": 7.7,
+      "sd_bias_kcal": 61.9,
+      "loa_lower_kcal": -113.7,
+      "loa_upper_kcal": 129.0,
+      "loa_width_kcal": 242.8
+    },
+    "loa_narrowing_pct": 58.4
+  },
+  "lins_concordance_correlation": {
+    "week1_ccc": 0.309,
+    "week2_ccc": 0.914,
+    "ccc_delta": 0.605
+  },
+  "split_conformal_calibration": {
+    "calibration_samples": 189,
+    "test_samples": 189,
+    "q_hat_90": 1.263,
+    "target_coverage_pct": 90.0,
+    "empirical_coverage_pct": 91.53,
+    "coverage_guarantee_met": true
+  }
+}

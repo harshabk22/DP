@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MessMate — Honest Dietary Intelligence</title>
+  <meta name="description" content="Effortless dietary tracking with calibrated tableware memory and honest calorie ranges.">
+  <link rel="stylesheet" href="/static/style.css?v=4">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23d97757%22/></svg>">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Navigation Bar -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-badge" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 11h16a8 8 0 0 1-16 0z"/>
+            <line x1="12" y1="3" x2="12" y2="7"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>MessMate</h1>
+          <p class="tagline">Honest calorie ranges. Zero interrogation.</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div id="auth-status" class="auth-badge">
+          <span class="status-dot"></span>
+          <span id="user-display">Not connected</span>
+        </div>
+        <button id="btn-quick-auth" class="btn btn-secondary btn-sm" title="Authenticate user account">Demo Sign-In</button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs" role="tablist">
+      <button class="nav-tab active" data-tab="tab-snap" role="tab" aria-selected="true">Log Meal</button>
+      <button class="nav-tab" data-tab="tab-onboarding" role="tab" aria-selected="false">Tableware</button>
+      <button class="nav-tab" data-tab="tab-today" role="tab" aria-selected="false">Journal</button>
+      <button class="nav-tab" data-tab="tab-digest" role="tab" aria-selected="false">Insights</button>
+    </nav>
+
+    <main class="main-content">
+      <!-- Tab 1: Log Meal -->
+      <section id="tab-snap" class="tab-pane active" role="tabpanel">
+        <div class="card capture-card">
+          <div class="card-header">
+            <div>
+              <h2>Plate Capture</h2>
+              <p class="card-subtitle">Take a photo of your plate or choose a sample.</p>
+            </div>
+            <div class="budget-pill" id="budget-pill" title="Daily question limit to protect you from decision fatigue">
+              <span class="budget-label">Clarifications:</span>
+              <span id="budget-count" class="budget-val">3/3 left today</span>
+            </div>
+          </div>
+
+          <!-- Dining Context Selector -->
+          <div class="context-gate-container">
+            <span class="context-label">Dining Setting</span>
+            <div class="context-toggle">
+              <button type="button" class="btn-context active" data-context="personal_home" id="ctx-home">
+                Home (Calibrated)
+              </button>
+              <button type="button" class="btn-context" data-context="commercial" id="ctx-away">
+                Dining Out (Standard)
+              </button>
+            </div>
+          </div>
+
+          <!-- Viewfinder Frame -->
+          <div class="viewfinder" id="drop-zone">
+            <input type="file" id="file-input" accept="image/*" capture="environment" class="file-input-hidden">
+            <div class="viewfinder-content" id="viewfinder-prompt">
+              <div class="camera-lens-graphic" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+              </div>
+              <p><strong>Tap to photograph or drop image</strong></p>
+              <small>Images stay private and automatically purge after 30 days</small>
+            </div>
+            <img id="image-preview" class="image-preview hidden" alt="Meal preview">
+          </div>
+
+          <div class="capture-actions">
+            <button id="btn-select-file" class="btn btn-secondary">Select Photo</button>
+            <button id="btn-sample-meal" class="btn btn-secondary" title="Load sample North Indian thali photo">Sample Plate</button>
+            <button id="btn-submit-meal" class="btn btn-primary" disabled>Analyze Meal</button>
+          </div>
+        </div>
+
+        <!-- Processing Indicator -->
+        <div id="analysis-loader" class="card loader-card hidden">
+          <div class="pulse-spinner"></div>
+          <p><strong>Measuring plate contents...</strong></p>
+          <small>Resolving certified nutrition and computing honest probability bounds</small>
+        </div>
+
+        <!-- Active Meal Analysis Card -->
+        <div id="meal-result-card" class="card result-card hidden">
+          <div class="result-header">
+            <div class="badge-cluster">
+              <span class="badge badge-success" id="result-status">Analyzed</span>
+              <span class="badge badge-outline" id="result-context">Home</span>
+            </div>
+            <span class="timestamp" id="result-time">Just now</span>
+          </div>
+
+          <!-- Honest Conformal Calorie Interval Gauge -->
+          <div class="calorie-interval-box">
+            <span class="interval-label">Calibrated Energy Range (90% Confidence)</span>
+            <div class="interval-display">
+              <span class="interval-numbers" id="interval-numbers">-- – --</span>
+              <span class="interval-unit">kcal</span>
+            </div>
+            
+            <!-- Uncertainty Gauge Bar -->
+            <div class="uncertainty-bar-container">
+              <div class="uncertainty-track">
+                <div class="uncertainty-range" id="uncertainty-range"></div>
+                <div class="uncertainty-mean-marker" id="uncertainty-marker" title="Expected average"></div>
+              </div>
+            </div>
+
+            <div class="mean-estimate">
+              Expected Average: <strong id="mean-calories">--</strong> kcal <span class="sd-subtle">(&plusmn;<span id="sd-calories">--</span> SD)</span>
+            </div>
+          </div>
+
+          <!-- Macronutrient Breakdown -->
+          <div class="macro-grid">
+            <div class="macro-item macro-protein">
+              <span class="macro-val" id="macro-protein">--g</span>
+              <span class="macro-name">Protein</span>
+            </div>
+            <div class="macro-item macro-fat">
+              <span class="macro-val" id="macro-fat">--g</span>
+              <span class="macro-name">Fat</span>
+            </div>
+            <div class="macro-item macro-carb">
+              <span class="macro-val" id="macro-carb">--g</span>
+              <span class="macro-name">Carbs</span>
+            </div>
+            <div class="macro-item macro-fibre">
+              <span class="macro-val" id="macro-fibre">--g</span>
+              <span class="macro-name">Fibre</span>
+            </div>
+          </div>
+
+          <!-- Interactive 1-Tap Question Shade -->
+          <div id="question-box" class="question-box hidden">
+            <div class="question-header">
+              <span class="question-badge">One Quick Clarification (Budget: <span id="q-budget-rem">1</span> left)</span>
+            </div>
+            <p class="question-prompt" id="question-prompt">How many servings?</p>
+            <div class="question-options" id="question-options">
+              <!-- Rendered dynamically as <= 4 discrete tap buttons -->
+            </div>
+            <small class="question-note">Answering narrows your uncertainty range by ~40%.</small>
+          </div>
+
+          <!-- Identified Dishes List -->
+          <div class="items-section">
+            <h3>Dishes on this Plate</h3>
+            <div id="items-list" class="items-list">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Dynamic Refill Chips -->
+          <div class="refill-section">
+            <span class="refill-label">Second Helping / Refill:</span>
+            <div id="refill-chips" class="refill-chips">
+              <small style="color: var(--text-muted);">Analyze a plate to enable dynamic refill chips.</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 2: Tableware Calibration -->
+      <section id="tab-onboarding" class="tab-pane" role="tabpanel">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2>Kitchen Tableware Calibration</h2>
+              <p class="card-subtitle">Choose your everyday dishes so MessMate remembers your household portion sizes.</p>
+            </div>
+          </div>
+
+          <!-- Bowl Selection -->
+          <div class="tableware-selector">
+            <h3>1. Primary Bowl (Dal, Curries, Yogurt)</h3>
+            <div class="archetype-grid">
+              <label class="archetype-card">
+                <input type="radio" name="bowl-size" value="150" data-unit="small_bowl">
+                <div class="archetype-visual" aria-hidden="true">
+                  <svg width="34" height="24" viewBox="0 0 36 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 6h28a14 14 0 0 1-28 0z" />
+                    <line x1="12" y1="20" x2="24" y2="20" />
+                  </svg>
+                </div>
+                <div class="archetype-info">
+                  <strong>Small Katori</strong>
+                  <span>~150 ml</span>
+                </div>
+              </label>
+              <label class="archetype-card active">
+                <input type="radio" name="bowl-size" value="350" data-unit="standard_bowl" checked>
+                <div class="archetype-visual" aria-hidden="true">
+                  <svg width="40" height="28" viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 8h32a16 16 0 0 1-32 0z" fill="rgba(217, 119, 87, 0.12)" />
+                    <line x1="14" y1="24" x2="26" y2="24" />
+                  </svg>
+                </div>
+                <div class="archetype-info">
+                  <strong>Standard Bowl</strong>
+                  <span>~350 ml (Default)</span>
+                </div>
+              </label>
+              <label class="archetype-card">
+                <input type="radio" name="bowl-size" value="650" data-unit="entree_bowl">
+                <div class="archetype-visual" aria-hidden="true">
+                  <svg width="46" height="30" viewBox="0 0 46 30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 8h40a20 20 0 0 1-40 0z" />
+                    <line x1="16" y1="28" x2="30" y2="28" />
+                  </svg>
+                </div>
+                <div class="archetype-info">
+                  <strong>Deep Entree Bowl</strong>
+                  <span>~650 ml</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Plate Selection -->
+          <div class="tableware-selector">
+            <h3>2. Dinner Plate</h3>
+            <div class="archetype-grid">
+              <label class="archetype-card">
+                <input type="radio" name="plate-size" value="350" data-unit="quarter_plate">
+                <div class="archetype-visual" aria-hidden="true">
+                  <svg width="34" height="20" viewBox="0 0 36 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <ellipse cx="18" cy="10" rx="16" ry="7" />
+                    <ellipse cx="18" cy="10" rx="10" ry="4" stroke-dasharray="2 2" />
+                  </svg>
+                </div>
+                <div class="archetype-info">
+                  <strong>Quarter Plate</strong>
+                  <span>20 cm (~350 ml heap)</span>
+                </div>
+              </label>
+              <label class="archetype-card active">
+                <input type="radio" name="plate-size" value="500" data-unit="dinner_plate" checked>
+                <div class="archetype-visual" aria-hidden="true">
+                  <svg width="40" height="24" viewBox="0 0 40 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <ellipse cx="20" cy="12" rx="18" ry="8" fill="rgba(217, 119, 87, 0.12)" />
+                    <ellipse cx="20" cy="12" rx="11" ry="5" stroke-dasharray="2 2" />
+                  </svg>
+                </div>
+                <div class="archetype-info">
+                  <strong>Standard Dinner Plate</strong>
+                  <span>27 cm (~500 ml heap)</span>
+                </div>
+              </label>
+              <label class="archetype-card">
+                <input type="radio" name="plate-size" value="800" data-unit="large_platter">
+                <div class="archetype-visual" aria-hidden="true">
+                  <svg width="46" height="26" viewBox="0 0 46 26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <ellipse cx="23" cy="13" rx="21" ry="9" />
+                    <ellipse cx="23" cy="13" rx="13" ry="6" stroke-dasharray="2 2" />
+                  </svg>
+                </div>
+                <div class="archetype-info">
+                  <strong>Large Thali / Platter</strong>
+                  <span>32 cm (~800 ml heap)</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Mug Selection -->
+          <div class="tableware-selector">
+            <h3>3. Cup / Mug</h3>
+            <div class="archetype-grid">
+              <label class="archetype-card">
+                <input type="radio" name="mug-size" value="150" data-unit="tea_cup">
+                <div class="archetype-visual" aria-hidden="true">
+                  <svg width="30" height="24" viewBox="0 0 30 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 5h14v11a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V5z" />
+                    <path d="M20 8h2a3 3 0 0 1 0 6h-2" />
+                    <line x1="4" y1="21" x2="22" y2="21" />
+                  </svg>
+                </div>
+                <div class="archetype-info">
+                  <strong>Traditional Tea Cup</strong>
+                  <span>150 ml</span>
+                </div>
+              </label>
+              <label class="archetype-card active">
+                <input type="radio" name="mug-size" value="240" data-unit="cup_mug" checked>
+                <div class="archetype-visual" aria-hidden="true">
+                  <svg width="34" height="26" viewBox="0 0 34 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 4h16v13a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V4z" fill="rgba(217, 119, 87, 0.12)" />
+                    <path d="M22 7h3a3.5 3.5 0 0 1 0 7h-3" />
+                    <line x1="4" y1="23" x2="24" y2="23" />
+                  </svg>
+                </div>
+                <div class="archetype-info">
+                  <strong>Standard Mug</strong>
+                  <span>240 ml (Default)</span>
+                </div>
+              </label>
+              <label class="archetype-card">
+                <input type="radio" name="mug-size" value="350" data-unit="large_tumbler">
+                <div class="archetype-visual" aria-hidden="true">
+                  <svg width="30" height="28" viewBox="0 0 30 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 3h18l-3 21H9L6 3z" />
+                  </svg>
+                </div>
+                <div class="archetype-info">
+                  <strong>Tall Glass / Tumbler</strong>
+                  <span>350 ml</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="onboarding-footer">
+            <button id="btn-save-onboarding" class="btn btn-primary btn-block">Save Tableware Memory</button>
+            <div id="onboarding-feedback" class="feedback-msg hidden"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 3: Journal -->
+      <section id="tab-today" class="tab-pane" role="tabpanel">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2>Today's Journal</h2>
+              <p class="card-subtitle">Aggregate energy and meals logged today.</p>
+            </div>
+            <span class="badge badge-outline" id="today-date-badge">2026-09-21</span>
+          </div>
+          
+          <div class="daily-stat-grid">
+            <div class="stat-card">
+              <span class="stat-num" id="daily-total-kcal">--</span>
+              <span class="stat-label">Total kcal</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-num" id="daily-meals-count">0</span>
+              <span class="stat-label">Meals Logged</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-num" id="daily-questions-used">0 / 3</span>
+              <span class="stat-label">Clarifications Used</span>
+            </div>
+          </div>
+
+          <div class="meals-history-section">
+            <h3>Meals Recorded Today</h3>
+            <div id="today-meals-list" class="today-meals-list">
+              <p class="empty-state">No meals logged yet today. Use the "Log Meal" tab to capture your first plate.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 4: Weekly Insights -->
+      <section id="tab-digest" class="tab-pane" role="tabpanel">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2>Weekly Nutrition Summary</h2>
+              <p class="card-subtitle">Evidence-based weekly reflection. No judgment, no broken streaks.</p>
+            </div>
+            <span class="badge badge-success">ICMR-NIN Guided</span>
+          </div>
+
+          <div class="digest-metrics">
+            <div class="digest-card">
+              <span class="digest-num" id="digest-days-logged">--</span>
+              <span class="digest-label">Days Logged</span>
+            </div>
+            <div class="digest-card">
+              <span class="digest-num" id="digest-mean-kcal">--</span>
+              <span class="digest-label">Daily Average kcal</span>
+            </div>
+          </div>
+
+          <div class="gap-analysis-box">
+            <h3>Essential Nutrient Benchmarks</h3>
+            <div class="gap-bars">
+              <div class="gap-item">
+                <div class="gap-meta">
+                  <span>Protein Intake (Reference: 54g/day)</span>
+                  <span id="gap-protein-val" class="gap-val">--</span>
+                </div>
+                <div class="progress-track"><div id="progress-protein" class="progress-fill" style="width: 0%"></div></div>
+              </div>
+              <div class="gap-item">
+                <div class="gap-meta">
+                  <span>Dietary Fibre (Reference: 30g/day)</span>
+                  <span id="gap-fibre-val" class="gap-val">--</span>
+                </div>
+                <div class="progress-track"><div id="progress-fibre" class="progress-fill" style="width: 0%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Food Swaps -->
+          <div class="swaps-section">
+            <h3>Thoughtful Food Swaps</h3>
+            <div id="swaps-container" class="swaps-container">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <div class="digest-footer">
+            <p class="disclaimer-text">Educational research prototype; not medical advice.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/app.js?v=3"></script>
+</body>
+</html>

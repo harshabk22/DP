@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  db:
+    image: pgvector/pgvector:pg15
+    container_name: messmate-db
+    restart: always
+    environment:
+      POSTGRES_DB: messmate
+      POSTGRES_USER: messmate
+      POSTGRES_PASSWORD: messmate_dev_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U messmate -d messmate"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: messmate-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: messmate-api
+    restart: always
+    environment:
+      DATABASE_URL: postgresql+asyncpg://messmate:messmate_dev_secret@db:5432/messmate
+      SYNC_DATABASE_URL: postgresql://messmate:messmate_dev_secret@db:5432/messmate
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: messmate_super_secret_jwt_key_at_least_32_bytes_long
+      ENVIRONMENT: development
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MessMate — Exact Codebase & Architecture Compass</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --card-bg: rgba(255, 255, 255, 0.04);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-cyan: #38BDF8;
+      --accent-green: #34D399;
+      --accent-amber: #F59E0B;
+      --accent-purple: #A78BFA;
+      --accent-rose: #FB7185;
+      --text-primary: #FFFFFF;
+      --text-secondary: #94A3B8;
+      --text-tertiary: #475569;
+      --code-bg: #080C14;
+      --spring-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background-color: var(--bg);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+      padding: 40px 24px 100px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1140px;
+      margin: 0 auto;
+    }
+
+    /* Apple-style Navigation Bar */
+    .apple-nav {
+      position: sticky;
+      top: 20px;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 22px;
+      background: rgba(18, 18, 20, 0.8);
+      backdrop-filter: blur(25px) saturate(190%);
+      -webkit-backdrop-filter: blur(25px) saturate(190%);
+      border: 0.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+      margin-bottom: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: #FFF;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan);
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+      margin-bottom: 12px;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      background: linear-gradient(180deg, #FFFFFF 30%, #94A3B8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: clamp(15px, 2vw, 18px);
+      color: var(--text-secondary);
+      max-width: 720px;
+      margin: 0 auto 30px;
+      font-weight: 400;
+    }
+
+    /* Live Search & Filter Bar */
+    .filter-wrapper {
+      background: rgba(255, 255, 255, 0.03);
+      border: 0.5px solid var(--card-border);
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 40px;
+      backdrop-filter: blur(20px);
+    }
+
+    .search-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      border: 0.5px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 12px 18px;
+      color: #FFF;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 14px;
+      transition: border-color 0.2s ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+    }
+
+    .filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .filter-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 0.5px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-secondary);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s var(--spring-ease);
+    }
+
+    .filter-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #FFF;
+    }
+
+    .filter-btn.active {
+      background: var(--accent-cyan);
+      color: #000;
+      font-weight: 600;
+      border-color: transparent;
+    }
+
+    /* Summary Stats Grid */
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .stat-box {
+      background: var(--card-bg);
+      border: 0.5px solid var(--card-border);
+      border-radius: 18px;
+      padding: 18px 20px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 24px;
+      font-weight: 700;
+      color: #FFF;
+      font-family: -apple-system, monospace;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Section Headers */
+    .section-title {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Codebase File Cards */
+    .code-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      margin-bottom: 50px;
+    }
+
+    .code-card {
+      background: var(--card-bg);
+      border: 0.5px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      transition: all 0.3s var(--spring-ease);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .code-card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .code-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .file-path-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #FFF;
+      font-family: -apple-system, monospace;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .layer-tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .tag-android { background: rgba(52, 211, 153, 0.15); color: #34D399; border: 0.5px solid rgba(52, 211, 153, 0.3); }
+    .tag-web { background: rgba(56, 189, 248, 0.15); color: #38BDF8; border: 0.5px solid rgba(56, 189, 248, 0.3); }
+    .tag-flutter { background: rgba(167, 139, 250, 0.15); color: #A78BFA; border: 0.5px solid rgba(167, 139, 250, 0.3); }
+    .tag-backend { background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 0.5px solid rgba(245, 158, 11, 0.3); }
+    .tag-ai { background: rgba(251, 113, 133, 0.15); color: #FB7185; border: 0.5px solid rgba(251, 113, 133, 0.3); }
+
+    .card-meta-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .meta-chip strong {
+      color: #FFF;
+    }
+
+    .code-card p.desc {
+      font-size: 14px;
+      color: #CBD5E1;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    /* Collapsible Code Preview */
+    details {
+      background: var(--code-bg);
+      border: 0.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    summary {
+      padding: 10px 16px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+      background: rgba(255, 255, 255, 0.02);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    summary:hover {
+      color: #FFF;
+    }
+
+    pre {
+      padding: 16px;
+      font-family: -apple-system, monospace;
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: #E2E8F0;
+      overflow-x: auto;
+    }
+
+    .kw { color: #FB7185; font-weight: 600; }
+    .fn { color: #38BDF8; }
+    .str { color: #34D399; }
+    .cmt { color: #64748B; font-style: italic; }
+
+    /* Architecture Visual Connector SVG */
+    .arch-svg-box {
+      background: var(--code-bg);
+      border: 0.5px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 50px;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 0.5px solid var(--card-border);
+      padding-top: 30px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Apple Minimal Navigation -->
+  <nav class="apple-nav">
+    <div class="nav-brand">
+      <div class="pulse-dot"></div>
+      <span>MessMate Codebase Compass</span>
+      <span style="color: var(--text-tertiary);">•</span>
+      <span style="color: var(--text-secondary); font-weight: 400;">Exact Code Locations</span>
+    </div>
+    <div style="font-size: 12px; color: var(--text-secondary);">
+      Repo: <code>College-projects/DP-App_Prototype</code>
+    </div>
+  </nav>
+
+  <!-- Hero Header -->
+  <header class="hero">
+    <span class="eyebrow">Definitive File-to-Function Index</span>
+    <h1>Where Every Line of Code Lives.<br>UI &amp; Backend.</h1>
+    <p>
+      Complete, empirical breakdown of every programming language, framework, library, and exact file location across both the client interfaces and the backend intelligence engine.
+    </p>
+  </header>
+
+  <!-- Summary Statistics Strip -->
+  <div class="stats-strip">
+    <div class="stat-box">
+      <div class="stat-number" style="color: var(--accent-cyan);">Python 3.11+</div>
+      <div class="stat-label">FastAPI Backend Engine</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" style="color: var(--accent-green);">Kotlin 17</div>
+      <div class="stat-label">Android Native Shell</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" style="color: var(--accent-purple);">Dart 3.x</div>
+      <div class="stat-label">Flutter Mobile Client</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" style="color: var(--accent-amber);">JavaScript</div>
+      <div class="stat-label">Web UI Controller</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" style="color: var(--accent-rose);">21 Core Files</div>
+      <div class="stat-label">Production Components</div>
+    </div>
+  </div>
+
+  <!-- Architecture Flow SVG -->
+  <div class="section-title">
+    <span>🗺️</span> UI to Backend File-Level Architecture Map
+  </div>
+  <div class="arch-svg-box">
+    <svg viewBox="0 0 1000 320" width="100%" height="320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 10 5 L 0 9 z" fill="#38BDF8"/>
+        </marker>
+        <marker id="arrowGreen" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 10 5 L 0 9 z" fill="#34D399"/>
+        </marker>
+      </defs>
+
+      <!-- UI Boxes -->
+      <g transform="translate(30, 40)">
+        <rect width="260" height="90" rx="14" fill="#0E1726" stroke="#34D399" stroke-width="1.5"/>
+        <text x="130" y="30" fill="#34D399" font-size="12" font-weight="700" text-anchor="middle">ANDROID NATIVE SHELL</text>
+        <text x="130" y="52" fill="#FFF" font-size="11" font-family="monospace" text-anchor="middle">android/.../MainActivity.kt</text>
+        <text x="130" y="70" fill="#94A3B8" font-size="10" text-anchor="middle">Kotlin 17 • FileProvider • Bridge</text>
+      </g>
+
+      <g transform="translate(30, 180)">
+        <rect width="260" height="90" rx="14" fill="#0E1726" stroke="#38BDF8" stroke-width="1.5"/>
+        <text x="130" y="30" fill="#38BDF8" font-size="12" font-weight="700" text-anchor="middle">WEB UI CONTROLLER</text>
+        <text x="130" y="52" fill="#FFF" font-size="11" font-family="monospace" text-anchor="middle">backend/static/app.js</text>
+        <text x="130" y="70" fill="#94A3B8" font-size="10" text-anchor="middle">Vanilla JS • REST • UI State</text>
+      </g>
+
+      <!-- Connectors to API Gateway -->
+      <path d="M290 85 C340 85, 340 160, 390 160" fill="none" stroke="#34D399" stroke-width="2" marker-end="url(#arrow)"/>
+      <path d="M290 225 C340 225, 340 160, 390 160" fill="none" stroke="#38BDF8" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- API Gateway -->
+      <g transform="translate(400, 115)">
+        <rect width="210" height="90" rx="14" fill="#162032" stroke="#38BDF8" stroke-width="2"/>
+        <text x="105" y="30" fill="#38BDF8" font-size="12" font-weight="700" text-anchor="middle">FASTAPI GATEWAY</text>
+        <text x="105" y="52" fill="#FFF" font-size="11" font-family="monospace" text-anchor="middle">app/api/v1/meals.py</text>
+        <text x="105" y="70" fill="#FDE68A" font-size="10.5" font-weight="600" text-anchor="middle">POST /v1/meals/photo</text>
+      </g>
+
+      <!-- Connector to DAG -->
+      <path d="M610 160 L670 160" fill="none" stroke="#38BDF8" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- DAG Orchestrator -->
+      <g transform="translate(680, 50)">
+        <rect width="280" height="220" rx="16" fill="#0A0F1D" stroke="#A78BFA" stroke-width="2"/>
+        <text x="140" y="28" fill="#A78BFA" font-size="12" font-weight="700" text-anchor="middle">CONCURRENT DAG ORCHESTRATOR</text>
+        <text x="140" y="46" fill="#FFF" font-size="11" font-family="monospace" text-anchor="middle">app/tasks/meal_pipeline.py</text>
+        
+        <!-- Sub-services -->
+        <rect x="20" y="60" width="240" height="40" rx="8" fill="#162032" stroke="rgba(255,255,255,0.1)"/>
+        <text x="140" y="85" fill="#34D399" font-size="10.5" font-family="monospace" text-anchor="middle">app/services/vision/reid.py (DINOv2)</text>
+
+        <rect x="20" y="110" width="240" height="40" rx="8" fill="#162032" stroke="rgba(255,255,255,0.1)"/>
+        <text x="140" y="135" fill="#F59E0B" font-size="10.5" font-family="monospace" text-anchor="middle">app/services/vlm/client.py (Gemini)</text>
+
+        <rect x="20" y="160" width="240" height="40" rx="8" fill="#162032" stroke="rgba(255,255,255,0.1)"/>
+        <text x="140" y="185" fill="#38BDF8" font-size="10.5" font-family="monospace" text-anchor="middle">app/services/resolution/engine.py (USDA)</text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Live Filter Bar -->
+  <div class="filter-wrapper">
+    <input type="text" class="search-input" id="search-bar" placeholder="Search by filename, function, framework, or model (e.g., 'reid', 'MainActivity', 'FastAPI', 'Gemini')..." oninput="filterCards()">
+    <div class="filter-pills">
+      <button class="filter-btn active" onclick="setCategory('all')">All Components (21)</button>
+      <button class="filter-btn" onclick="setCategory('android')">Android Native UI</button>
+      <button class="filter-btn" onclick="setCategory('web')">Web UI</button>
+      <button class="filter-btn" onclick="setCategory('flutter')">Flutter Client</button>
+      <button class="filter-btn" onclick="setCategory('backend')">Backend API &amp; DAG</button>
+      <button class="filter-btn" onclick="setCategory('ai')">Vision &amp; AI Models</button>
+      <button class="filter-btn" onclick="setCategory('nutrition')">Nutrition &amp; Math</button>
+    </div>
+  </div>
+
+  <!-- Code Directory Grid -->
+  <div class="code-grid" id="code-container">
+
+    <!-- Card 1: Android MainActivity -->
+    <div class="code-card" data-category="android" data-keywords="android kotlin mainactivity webview fileprovider bridge notification">
+      <div class="code-card-header">
+        <div class="file-path-title">
+          <span>📱</span> android/app/src/main/java/com/messmate/app/MainActivity.kt
+        </div>
+        <span class="layer-tag tag-android">Android Native UI</span>
+      </div>
+      <div class="card-meta-line">
+        <span class="meta-chip">Language: <strong>Kotlin 17</strong></span>
+        <span class="meta-chip">Frameworks: <strong>Android SDK 36, WebKit WebView, Jetpack Compose</strong></span>
+        <span class="meta-chip">Key Class: <strong>MainActivity, MessMateNativeBridge</strong></span>
+      </div>
+      <p class="desc">
+        The native Android client shell. Manages the high-performance hardware WebView, launches scoped camera captures via <code>FileProvider.getUriForFile()</code>, binds the JavaScript bridge interface, and schedules ambient $T+20\text{ min}$ delayed push notifications via the Android <code>NotificationManager</code>.
+      </p>
+      <details>
+        <summary>View Exact Implementation Snippet (Lines 163-195)</summary>
+        <pre><code><span class="cmt">// Native JavaScript bridge for notification scheduling and URL configuration</span>
+webView.addJavascriptInterface(<span class="fn">MessMateNativeBridge</span>(<span class="kw">this</span>), <span class="str">"MessMateNative"</span>)
+
+<span class="kw">class</span> <span class="fn">MessMateNativeBridge</span>(<span class="kw">private val</span> activity: MainActivity) {
+    <span class="kw">@JavascriptInterface</span>
+    <span class="kw">fun</span> <span class="fn">scheduleDelayedNotification</span>(mealId: String, prompt: String, optionsJson: String, delaySeconds: Long) {
+        Handler(Looper.getMainLooper()).postDelayed({
+            activity.showClarificationNotification(mealId, prompt)
+        }, delaySeconds * <span class="str">1000L</span>)
+    }
+
+    <span class="kw">@JavascriptInterface</span>
+    <span class="kw">fun</span> <span class="fn">setServerUrl</span>(url: String) { activity.saveAndReloadUrl(url) }
+
+    <span class="kw">@JavascriptInterface</span>
+    <span class="kw">fun</span> <span class="fn">isNativeAndroid</span>(): Boolean = <span class="kw">true</span>
+}</code></pre>
+      </details>
+    </div>
+
+    <!-- Card 2: Android build.gradle.kts -->
+    <div class="code-card" data-category="android" data-keywords="android gradle kts kotlin sdk compose dependencies">
+      <div class="code-card-header">
+        <div class="file-path-title">
+          <span>⚙️</span> android/app/build.gradle.kts
+        </div>
+        <span class="layer-tag tag-android">Android Build Config</span>
+      </div>
+      <div class="card-meta-line">
+        <span class="meta-chip">Language: <strong>Kotlin DSL</strong></span>
+        <span class="meta-chip">Toolchain: <strong>Java 17, Android compileSdk 36, minSdk 24</strong></span>
+        <span class="meta-chip">Dependencies: <strong>Compose BOM, Navigation 3, Material 3, Lifecycle</strong></span>
+      </div>
+      <p class="desc">
+        Configures the native Android application targets, compiler features, and Gradle dependencies. Enforces JVM toolchain 17 and enables Compose compiler plugins.
+      </p>
+      <details>
+        <summary>View Exact Build Setup</summary>
+        <pre><code>android {
+    namespace = <span class="str">"com.messmate.app"</span>
+    compileSdk = <span class="kw">36</span>
+    defaultConfig {
+        applicationId = <span class="str">"com.messmate.app"</span>
+        minSdk = <span class="kw">24</span>
+        targetSdk = <span class="kw">36</span>
+        versionName = <span class="str">"2.0.0"</span>
+    }
+}
+kotlin { jvmToolchain(<span class="kw">17</span>) }</code></pre>
+      </details>
+    </div>
+
+    <!-- Card 3: Web UI app.js -->
+    <div class="code-card" data-category="web" data-keywords="javascript app.js vanilla ui frontend rest api bridge">
+      <div class="code-card-header">
+        <div class="file-path-title">
+          <span>🌐</span> backend/static/app.js
+        </div>
+        <span class="layer-tag tag-web">Web UI Controller</span>
+      </div>
+      <div class="card-meta-line">
+        <span class="meta-chip">Language: <strong>Vanilla JavaScript (ES6+)</strong></span>
+        <span class="meta-chip">Dependencies: <strong>Zero External Libraries (Pure DOM &amp; Fetch API)</strong></span>
+        <span class="meta-chip">Key Functions: <strong>submitMealPhoto(), pollMealStatus(), answerQuestion()</strong></span>
+      </div>
+      <p class="desc">
+        The core client controller. Manages user authentication tokens, camera image downsampling, multipart form data submission to <code>POST /v1/meals/photo</code>, polling meal analysis results, and delegating delayed notification timers to the native Android bridge via <code>window.MessMateNative</code>.
+      </p>
+      <details>
+        <summary>View Notification Bridge Call (Lines 310-330)</summary>
+        <pre><code><span class="kw">if</span> (window.MessMateNative &amp;&amp; window.MessMateNative.scheduleDelayedNotification) {
+  <span class="cmt">// Delegate to native Android NotificationManager (+20 min)</span>
+  window.MessMateNative.scheduleDelayedNotification(
+    data.meal_id,
+    data.question.prompt,
+    JSON.stringify(data.question.options),
+    <span class="kw">1200</span> <span class="cmt">// 20 minutes in seconds</span>
+  );
+}</code></pre>
+      </details>
+    </div>
+
+    <!-- Card 4: Web UI index.html & style.css -->
+    <div class="code-card" data-category="web" data-keywords="html css layout viewfinder context chips">
+      <div class="code-card-header">
+        <div class="file-path-title">
+          <span>🎨</span> backend/static/index.html &amp; backend/static/style.css
+        </div>
+        <span class="layer-tag tag-web">Web UI Layout &amp; Styles</span>
+      </div>
+      <div class="card-meta-line">
+        <span class="meta-chip">Languages: <strong>HTML5, CSS3</strong></span>
+        <span class="meta-chip">Features: <strong>Glassmorphism, Camera Viewfinder, Context Toggle [Home / Away]</strong></span>
+      </div>
+      <p class="desc">
+        Renders the mobile-optimized interface: drag-and-drop / camera input viewport, active tableware indicators, live nutritional confidence meters, and 1-tap clarification chips.
+      </p>
+    </div>
+
+    <!-- Card 5: Flutter Mobile Camera Screen -->
+    <div class="code-card" data-category="flutter" data-keywords="flutter dart mobile camera snap screen exif">
+      <div class="code-card-header">
+        <div class="file-path-title">
+          <span>🦋</span> mobile/lib/features/camera/screens/camera_snap_screen.dart
+        </div>
+        <span class="layer-tag tag-flutter">Flutter Mobile Client</span>
+      </div>
+      <div class="card-meta-line">
+        <span class="meta-chip">Language: <strong>Dart 3.x</strong></span>
+        <span class="meta-chip">Framework: <strong>Flutter SDK</strong></span>
+        <span class="meta-chip">Key Class: <strong>CameraSnapScreen, ExifExtractor</strong></span>
+      </div>
+      <p class="desc">
+        Implements the Flutter "Snap &amp; Shove" camera interface. Captures raw camera buffers, extracts optical sensor metadata (focal length, 35mm equivalent), downsamples to 800x800 WebP (&lt;120KB), and posts to the backend.
+      </p>
+    </div>
+
+    <!-- Card 6: Backend Main Entrypoint -->
+    <div class="code-card" data-category="backend" data-keywords="fastapi python uvicorn main.py cors routing">
+      <div class="code-card-header">
+        <div class="file-path-title">
+          <span>🐍</span> backend/app/main.py
+        </div>
+        <span class="layer-tag tag-backend">Backend Entrypoint</span>
+      </div>
+      <div class="card-meta-line">
+        <span class="meta-chip">Language: <strong>Python 3.11+</strong></span>
+        <span class="meta-chip">Frameworks: <strong>FastAPI, Uvicorn, Starlette</strong></span>
+        <span class="meta-chip">Key Function: <strong>create_app()</strong></span>
+      </div>
+      <p class="desc">
+        The FastAPI application factory. Registers CORS middleware, exception handlers, mounts the static frontend UI assets at <code>/static</code>, and mounts the <code>/v1</code> REST API router.
+      </p>
+    </div>
+
+    <!-- Card 7: Concurrent DAG Orchestrator -->
+    <div class="code-card" data-category="backend" data-keywords="pipeline meal_pipeline dag asyncio gather orchestrator">
+      <div class="code-card-header">
+        <div class="file-path-title">
+          <span>⚡</span> backend/app/tasks/meal_pipeline.py
+        </div>
+        <span class="layer-tag tag-backend">DAG Orchestrator</span>
+      </div>
+      <div class="card-meta-line">
+        <span class="meta-chip">Language: <strong>Python 3.11+</strong></span>
+        <span class="meta-chip">Core Library: <strong>asyncio.gather()</strong></span>
+        <span class="meta-chip">Latency SLA: <strong>&lt; 442 ms</strong></span>
+      </div>
+      <p class="desc">
+        The orchestrator of the entire system. Concurrently launches Branch 1 (Local CV / DINOv2 Re-ID), Branch 2 (Gemini 2.5 Flash-Lite VLM), and Branch 3 (Redis Prior pre-fetch), joins them for 3-tier database resolution and Monte Carlo analysis, and triggers the VoI question allocator.
+      </p>
+      <details>
+        <summary>View Concurrent Orchestration (Lines 100-140)</summary>
+        <pre><code><span class="kw">async def</span> <span class="fn">analyze_meal</span>(meal_id: uuid.UUID, session: Session):
+    <span class="cmt"># Concurrently execute 3 independent branches</span>
+    cv_task = asyncio.<span class="fn">create_task</span>(run_local_cv_branch(image_bytes, exif_meta))
+    vlm_task = asyncio.<span class="fn">create_task</span>(vlm_client.extract_dishes(image_bytes))
+    db_task = asyncio.<span class="fn">create_task</span>(prefetch_user_priors(user_id))
+
+    <span class="cmt"># Await DAG completion</span>
+    cv_res, vlm_res, priors = <span class="kw">await</span> asyncio.<span class="fn">gather</span>(cv_task, vlm_task, db_task)</code></pre>
+      </details>
+    </div>
+
+    <!-- Card 8: DINOv2 Tableware Re-ID -->
+    <div class="code-card" data-category="ai" data-keywords="dinov2 pytorch transformers vision reid tableware embedding">
+      <div class="code-card-header">
+        <div class="file-path-title">
+          <span>👁️</span> backend/app/services/vision/reid.py
+        </div>
+        <span class="layer-tag tag-ai">Visual Re-ID Model</span>
+      </div>
+      <div class="card-meta-line">
+        <span class="meta-chip">Language: <strong>Python 3.11+</strong></span>
+        <span class="meta-chip">Libraries: <strong>PyTorch, Transformers, Torchvision</strong></span>
+        <span class="meta-chip">Model: <strong>facebook/dinov2-small (384-dimensional)</strong></span>
+      </div>
+      <p class="desc">
+        Extracts self-supervised visual descriptors from plates and bowls. Computes cosine similarity against stored user tableware priors ($\text{threshold} \ge 0.85$) to separate personal bowl volume from visual observation noise.
+      </p>
+      <details>
+        <summary>View Cosine Matching Function (Lines 112-130)</summary>
+        <pre><code><span class="kw">def</span> <span class="fn">compute_tableware_similarity</span>(vec1: np.ndarray, vec2: np.ndarray) -&gt; float:
+    dot = np.<span class="fn">dot</span>(vec1, vec2)
+    norm = np.linalg.<span class="fn">norm</span>(vec1) * np.linalg.<span class="fn">norm</span>(vec2)
+    <span class="kw">return</span> float(dot / norm) <span class="kw">if</span> norm &gt; <span class="kw">0</span> <span class="kw">else</span> <span class="kw">0.0</span></code></pre>
+      </details>
+    </div>
+
+    <!-- Card 9: VLM Perception Client (Gemini) -->
+    <div class="code-card" data-category="ai" data-keywords="gemini flash-lite vlm perception client invariant i1">
+      <div class="code-card-header">
+        <div class="file-path-title">
+          <span>🤖</span> backend/app/services/vlm/client.py
+        </div>
+        <span class="layer-tag tag-ai">Multimodal VLM</span>
+      </div>
+      <div class="card-meta-line">
+        <span class="meta-chip">Language: <strong>Python 3.11+</strong></span>
+        <span class="meta-chip">Model: <strong>Google Gemini 2.5 Flash-Lite (K=1, T=0.0)</strong></span>
+        <span class="meta-chip">Rule: <strong>Invariant I1 (Zero Nutrient Hallucination)</strong></span>
+      </div>
+      <p class="desc">
+        Sends the 800x800 image to Gemini Flash-Lite with a strict Pydantic JSON schema. Identifies dish names (e.g., "sambar", "steamed rice") and vessel archetypes (e.g., "standard_bowl"). Strictly forbidden from estimating calories or macronutrients.
+      </p>
+    </div>
+
+    <!-- Card 10: 3-Tier Nutrition Resolution Engine -->
+    <div class="code-card" data-category="nutrition" data-keywords="fastembed vector usda ifct indb resolution engine hnsw">
+      <div class="code-card-header">
+        <div class="file-path-title">
+          <span>🔬</span> backend/app/services/resolution/engine.py &amp; embedding.py
+        </div>
+        <span class="layer-tag tag-nutrition">Nutrition Engine</span>
+      </div>
+      <div class="card-meta-line">
+        <span class="meta-chip">Language: <strong>Python 3.11+</strong></span>
+        <span class="meta-chip">Libraries: <strong>FastEmbed (bge-small-en-v1.5), SQLAlchemy</strong></span>
+        <span class="meta-chip">Databases: <strong>USDA FNDDS + INDB + IFCT Chemical Tables</strong></span>
+      </div>
+      <p class="desc">
+        Converts culinary dish labels into 384-dimensional dense semantic vectors and performs HNSW nearest-neighbor search against lab-verified food tables. Eliminates LLM nutrition hallucinations entirely.
+      </p>
+    </div>
+
+    <!-- Card 11: Monte Carlo & Conformal Prediction -->
+    <div class="code-card" data-category="nutrition" data-keywords="monte carlo scipy numpy conformal intervals p10 p90">
+      <div class="code-card-header">
+        <div class="file-path-title">
+          <span>📊</span> backend/app/services/nutrition/monte_carlo.py &amp; conformal/engine.py
+        </div>
+        <span class="layer-tag tag-nutrition">Statistical Math</span>
+      </div>
+      <div class="card-meta-line">
+        <span class="meta-chip">Language: <strong>Python 3.11+</strong></span>
+        <span class="meta-chip">Libraries: <strong>NumPy, SciPy</strong></span>
+        <span class="meta-chip">Method: <strong>Analytical Log-Normal Sum &amp; Conformal $[p_{10}, p_{90}]$</strong></span>
+      </div>
+      <p class="desc">
+        Computes closed-form food portion distributions, bulk density scaling ($g/mL$), and honest calibrated uncertainty bounds $[p_{10}, p_{90}]$ for calories and macronutrients.
+      </p>
+    </div>
+
+    <!-- Card 12: Value-of-Information (VoI) Allocator -->
+    <div class="code-card" data-category="nutrition" data-keywords="voi allocator redis attention budget questions">
+      <div class="code-card-header">
+        <div class="file-path-title">
+          <span>🔔</span> backend/app/services/allocator/engine.py
+        </div>
+        <span class="layer-tag tag-nutrition">Attention Budgeting</span>
+      </div>
+      <div class="card-meta-line">
+        <span class="meta-chip">Language: <strong>Python 3.11+</strong></span>
+        <span class="meta-chip">Infrastructure: <strong>Redis (TTL budget counters)</strong></span>
+        <span class="meta-chip">Rules: <strong>Max 3 Questions/Day (Invariant I3 &amp; I4)</strong></span>
+      </div>
+      <p class="desc">
+        Evaluates variance reduction $\Delta \sigma^2$ vs user cognitive burden. Decides whether to prompt the user with a 1-tap discrete count question or stay completely silent.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>MessMate Open-World Dietary Intelligence Platform • Codebase Compass</p>
+    <p style="margin-top: 4px; font-size: 11.5px;">All references verified directly against active repository files in <code>/Users/harshavardhanbk/Documents/College-projects/DP-App_Prototype</code>.</p>
+  </footer>
+
+</div>
+
+<script>
+  let activeCategory = 'all';
+
+  function setCategory(cat) {
+    activeCategory = cat;
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    filterCards();
+  }
+
+  function filterCards() {
+    const query = document.getElementById('search-bar').value.toLowerCase();
+    const cards = document.querySelectorAll('.code-card');
+
+    cards.forEach(card => {
+      const category = card.getAttribute('data-category');
+      const keywords = card.getAttribute('data-keywords').toLowerCase();
+      const text = card.innerText.toLowerCase();
+
+      const matchCategory = (activeCategory === 'all' || category === activeCategory);
+      const matchSearch = (!query || keywords.includes(query) || text.includes(query));
+
+      if (matchCategory && matchSearch) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

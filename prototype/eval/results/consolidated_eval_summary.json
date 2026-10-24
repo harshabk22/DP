@@ -1,0 +1,31 @@
+{
+  "evaluation_type": "in_silico_monte_carlo_validation",
+  "disclaimer": "NOTICE: This evaluation harness executes in-silico Monte Carlo simulations across parameterized food distributions and synthetic personas. These results validate algorithmic mechanics and mathematical convergence; they do not represent clinical human trial outcomes.",
+  "execution_date": "2026-10-24T05:30:13Z",
+  "total_runtime_seconds": 1.0,
+  "tier1_weighed_benchmark": {
+    "dishes_count": 200,
+    "zero_shot_kcal_mae": 168.34,
+    "messmate_kcal_mae": 35.3,
+    "calorie_mae_reduction_pct": 79.0,
+    "invariant_i1_verified": true
+  },
+  "tier2_simulation": {
+    "personas_count": 200,
+    "days": 60,
+    "messmate_voi_q_per_meal": 0.761,
+    "messmate_voi_oracle_accuracy_pct": 100.0,
+    "target_q_per_meal_cap": 0.8,
+    "target_accuracy_min": 85.0,
+    "pareto_claim_verified": true
+  },
+  "tier3_conformal_cohort": {
+    "households_count": 18,
+    "meals_logged": 756,
+    "bland_altman_loa_narrowing_pct": 58.4,
+    "lins_ccc_delta": 0.605,
+    "empirical_coverage_pct": 91.53,
+    "target_coverage_pct": 90.0,
+    "conformal_guarantee_verified": true
+  }
+}

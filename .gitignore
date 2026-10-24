@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Databases & local sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Android & Gradle
+.gradle/
+**/build/
+**/app/build/
+local.properties
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# Flutter & Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Microsoft Office temp locks
+~$*.pptx
+~$*.docx
+~$*.xlsx
+
+# Temporary & scratch
+.playwright-mcp/
+tmp/
+temp/
+*.log
+
+# Secrets and environment files
+.env
+*.env
+.env.*
+!*.env.example

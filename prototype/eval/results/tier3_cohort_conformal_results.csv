@@ -1,0 +1,6 @@
+Metric,Week 1 (Uncalibrated),Week 2 (Calibrated),Delta / Outcome
+Mean Bias (kcal),1.4,7.7,+6.3
+Bland-Altman 95% LoA,"[-290.2, 293.0]","[-113.7, 129.0]",-58.4% narrower
+Lin's Concordance (CCC),0.309,0.914,+0.605
+Conformal q_hat_0.90,—,1.263,Fitted on D_cal
+Conformal 90% Coverage,—,91.53%,PASS (>= 90%)

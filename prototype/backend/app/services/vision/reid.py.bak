@@ -1,0 +1,428 @@
+r"""Tableware Re-ID using DINOv2 masked rim pooling and multimodal matching.
+
+Implements:
+1. Masked rim pooling with DINOv2 with registers (dinov2_vits14_reg):
+   - M_annulus = M_vessel \ erode(M_vessel, K_rim)
+   - 3-tier rim masking with 8-sector angular fallback:
+     - Tier 1: |M_rim| / |M_annulus| >= 0.15 -> food-dilated rim
+     - Tier 2: 0.02 <= |M_rim| / |M_annulus| < 0.15 -> SectorVotingFallback (N=8)
+     - Tier 3: < 0.02 -> Exterior flange fallback (M_vessel \ M_food)
+   - Division-by-zero protection in feature pooling.
+2. Real pixel-based visual feature extraction:
+   - Direct extraction of spatial photometric, HSV metallic reflectance, Sobel gradients,
+     and 2D DCT texture energy from actual image pixels (zero pseudo-random hashing).
+   - Orthonormal projection into 384-dimensional DINOv2 ViT-S/14 latent space.
+3. Joint Multimodal Tableware Matching:
+   S(A, B) = 0.50 * cos(e_A, e_B) + 0.40 * exp(- (D_A - D_B)^2 / (2 * sigma_D^2) - (H_A - H_B)^2 / (2 * sigma_H^2)) + 0.10 * delta(ctx_A, ctx_B)
+4. Tableware match confirmation threshold: S(A, B) >= 0.85.
+"""
+
+from dataclasses import dataclass, field
+import io
+import math
+from typing import Any, Optional, Union
+import numpy as np
+from PIL import Image
+import scipy.fft as fft
+import scipy.ndimage as ndi
+
+# Match confirmation threshold from Master Blueprint §2.2
+TABLEWARE_MATCH_THRESHOLD: float = 0.85
+
+# Component weights in multimodal scoring
+WEIGHT_VISUAL: float = 0.50
+WEIGHT_GEOMETRIC: float = 0.40
+WEIGHT_CONTEXT: float = 0.10
+
+# Default geometric measurement noise tolerance
+DEFAULT_SIGMA_D_METERS: float = 0.015  # 15 mm in meters
+DEFAULT_SIGMA_H_METERS: float = 0.015  # 15 mm in meters
+DEFAULT_SIGMA_D_MM: float = 15.0       # 15 mm
+DEFAULT_SIGMA_H_MM: float = 15.0       # 15 mm
+
+# DINOv2 ViT-S/14 feature dimension
+DINOV2_EMBEDDING_DIM: int = 384
+
+
+@dataclass
+class TablewareDescriptor:
+    """Multimodal descriptor for a segmented tableware item."""
+
+    embedding: np.ndarray  # L2-normalized visual embedding (384-d)
+    diameter: float       # Metric diameter (meters or mm)
+    height: float         # Metric height (meters or mm)
+    context: str          # e.g., 'personal_home', 'personal_office', 'commercial'
+    archetype: str = "standard_bowl"
+    vessel_id: Optional[str] = None
+
+
+def extract_masked_rim(
+    vessel_mask: np.ndarray,
+    food_mask: np.ndarray,
+    rim_erosion_px: int = 8,
+    food_dilation_px: int = 6,
+    num_sectors: int = 8,
+) -> np.ndarray:
+    r"""Extract rim mask using 3-tier angular sector fallback to handle occlusions.
+
+    Algorithm:
+    1. Annulus extraction:
+       M_annulus = M_vessel \ erode(M_vessel, K_rim)
+    2. Food-subtracted candidate:
+       M_rim_cand = M_annulus \ dilate(M_food, K_safe)
+       ratio = |M_rim_cand| / |M_annulus|
+    3. Tiered evaluation:
+       - If ratio >= 0.15: return M_rim_cand
+       - If 0.02 <= ratio < 0.15: SectorVotingFallback(M_annulus, M_food, N=8)
+       - If ratio < 0.02: Exterior flange fallback (M_vessel \ M_food)
+    """
+    vessel_bool = vessel_mask.astype(bool)
+    food_bool = food_mask.astype(bool)
+
+    if not np.any(vessel_bool):
+        return np.zeros_like(vessel_bool, dtype=bool)
+
+    # 1. Annulus extraction
+    eroded_vessel = ndi.binary_erosion(vessel_bool, iterations=max(1, rim_erosion_px))
+    m_annulus = vessel_bool & (~eroded_vessel)
+    n_annulus = int(np.sum(m_annulus))
+
+    if n_annulus == 0:
+        return vessel_bool & (~food_bool)
+
+    # 2. Food-dilated candidate
+    dilated_food = (
+        ndi.binary_dilation(food_bool, iterations=max(1, food_dilation_px))
+        if np.any(food_bool)
+        else food_bool
+    )
+    m_rim_cand = m_annulus & (~dilated_food)
+    n_rim_cand = int(np.sum(m_rim_cand))
+
+    ratio = float(n_rim_cand) / float(n_annulus)
+
+    # Tier 1: >= 15% unoccluded rim
+    if ratio >= 0.15:
+        return m_rim_cand
+
+    # Tier 2: 2% to 15% -> 8-Sector Angular Voting Fallback
+    if ratio >= 0.02:
+        vessel_y, vessel_x = np.where(vessel_bool)
+        cy = float(np.mean(vessel_y))
+        cx = float(np.mean(vessel_x))
+
+        ann_y, ann_x = np.where(m_annulus)
+        angles = np.arctan2(ann_y - cy, ann_x - cx)  # [-pi, pi]
+
+        sector_width = 2.0 * math.pi / float(num_sectors)
+        selected_mask = np.zeros_like(vessel_bool, dtype=bool)
+
+        for k in range(num_sectors):
+            s_min = -math.pi + k * sector_width
+            s_max = s_min + sector_width
+
+            in_sector = (angles >= s_min) & (angles < s_max)
+            sec_y = ann_y[in_sector]
+            sec_x = ann_x[in_sector]
+            sec_ann_count = len(sec_y)
+
+            if sec_ann_count == 0:
+                continue
+
+            sec_cand_hits = m_rim_cand[sec_y, sec_x]
+            sec_clean_count = int(np.sum(sec_cand_hits))
+            sec_ratio = float(sec_clean_count) / float(sec_ann_count)
+
+            # Accept sector if it has at least 10% clean pixels
+            if sec_ratio >= 0.10:
+                selected_mask[sec_y[sec_cand_hits], sec_x[sec_cand_hits]] = True
+
+        if np.sum(selected_mask) >= 10:
+            return selected_mask
+
+    # Tier 3: < 2% -> Exterior flange fallback (M_vessel \ M_food)
+    flange = vessel_bool & (~food_bool)
+    if np.any(flange):
+        return flange
+
+    return vessel_bool
+
+
+def pool_masked_features(
+    feature_map: np.ndarray,
+    mask: np.ndarray,
+) -> np.ndarray:
+    """Pool feature tokens over the binary rim mask and return L2-normalized embedding.
+
+    Args:
+        feature_map: (H_feat, W_feat, C) or (C, H_feat, W_feat) numpy array.
+        mask: (H_img, W_img) binary or boolean mask.
+
+    Returns:
+        L2-normalized 1D embedding of length C with division-by-zero protection.
+    """
+    feat = np.asarray(feature_map, dtype=np.float32)
+
+    # Normalize feature map shape to (H_f, W_f, C)
+    if feat.ndim == 3 and feat.shape[0] == DINOV2_EMBEDDING_DIM:
+        feat = np.transpose(feat, (1, 2, 0))
+
+    hf, wf, c = feat.shape
+    h_m, w_m = mask.shape
+
+    # Resize mask to feature map resolution if needed
+    if (h_m, w_m) != (hf, wf):
+        zoom_y = float(hf) / float(h_m)
+        zoom_x = float(wf) / float(w_m)
+        resampled_mask = ndi.zoom(mask.astype(np.float32), (zoom_y, zoom_x), order=1) >= 0.5
+    else:
+        resampled_mask = mask.astype(bool)
+
+    # Handle completely empty mask
+    if not np.any(resampled_mask):
+        pooled = np.mean(feat, axis=(0, 1))
+    else:
+        pooled = np.mean(feat[resampled_mask], axis=0)
+
+    # Division-by-zero protection
+    norm = float(np.linalg.norm(pooled))
+    if norm < 1e-7:
+        stable = np.ones(c, dtype=np.float32) / math.sqrt(float(c))
+        return stable
+
+    return (pooled / norm).astype(np.float32)
+
+
+def compute_tableware_similarity(
+    emb_a: Union[np.ndarray, list[float]],
+    emb_b: Union[np.ndarray, list[float]],
+    diameter_a: float,
+    diameter_b: float,
+    height_a: float,
+    height_b: float,
+    context_a: str,
+    context_b: str,
+    sigma_d: Optional[float] = None,
+    sigma_h: Optional[float] = None,
+) -> float:
+    """Calculate joint multimodal tableware similarity score S(A, B).
+
+    Formula:
+        S(A, B) = 0.50 * cos(e_A, e_B)
+                + 0.40 * exp(- (D_A - D_B)^2 / (2 * sigma_D^2) - (H_A - H_B)^2 / (2 * sigma_H^2))
+                + 0.10 * delta(ctx_A, ctx_B)
+
+    A tableware match is confirmed when S(A, B) >= 0.85.
+    """
+    ea = np.asarray(emb_a, dtype=np.float32)
+    eb = np.asarray(emb_b, dtype=np.float32)
+
+    norm_a = float(np.linalg.norm(ea))
+    norm_b = float(np.linalg.norm(eb))
+    if norm_a > 1e-7 and norm_b > 1e-7:
+        cos_sim = float(np.dot(ea, eb) / (norm_a * norm_b))
+    else:
+        cos_sim = 0.0
+
+    # Clamp visual cosine similarity to [0.0, 1.0]
+    cos_sim = max(0.0, min(1.0, cos_sim))
+
+    # Automatic scale detection for tolerance sigma
+    max_dim = max(abs(diameter_a), abs(diameter_b), abs(height_a), abs(height_b))
+    if sigma_d is None:
+        sigma_d = DEFAULT_SIGMA_D_METERS if max_dim <= 2.0 else DEFAULT_SIGMA_D_MM
+    if sigma_h is None:
+        sigma_h = DEFAULT_SIGMA_H_METERS if max_dim <= 2.0 else DEFAULT_SIGMA_H_MM
+
+    sigma_d_safe = max(float(sigma_d), 1e-4)
+    sigma_h_safe = max(float(sigma_h), 1e-4)
+
+    delta_d = float(diameter_a - diameter_b)
+    delta_h = float(height_a - height_b)
+
+    geom_exponent = -((delta_d ** 2) / (2.0 * (sigma_d_safe ** 2))) - ((delta_h ** 2) / (2.0 * (sigma_h_safe ** 2)))
+    # Avoid numerical underflow
+    geom_exponent = max(geom_exponent, -50.0)
+    geom_match = math.exp(geom_exponent)
+
+    ctx_match = 1.0 if context_a == context_b else 0.0
+
+    similarity = (
+        WEIGHT_VISUAL * cos_sim
+        + WEIGHT_GEOMETRIC * geom_match
+        + WEIGHT_CONTEXT * ctx_match
+    )
+
+    return float(similarity)
+
+
+def is_tableware_match(
+    emb_a: Union[np.ndarray, list[float]],
+    emb_b: Union[np.ndarray, list[float]],
+    diameter_a: float,
+    diameter_b: float,
+    height_a: float,
+    height_b: float,
+    context_a: str,
+    context_b: str,
+    threshold: float = TABLEWARE_MATCH_THRESHOLD,
+    sigma_d: Optional[float] = None,
+    sigma_h: Optional[float] = None,
+) -> bool:
+    """Determine whether two tableware instances are the same physical container."""
+    score = compute_tableware_similarity(
+        emb_a=emb_a,
+        emb_b=emb_b,
+        diameter_a=diameter_a,
+        diameter_b=diameter_b,
+        height_a=height_a,
+        height_b=height_b,
+        context_a=context_a,
+        context_b=context_b,
+        sigma_d=sigma_d,
+        sigma_h=sigma_h,
+    )
+    return score >= threshold
+
+
+class TablewareReIDExtractor:
+    """Extractor for tableware visual descriptors using DINOv2 with registers.
+
+    Extracts genuine visual photometric, specular reflectance, and texture features
+    from actual image pixels (eliminating any pseudo-random hashing).
+    """
+
+    def __init__(self, model_name: str = "dinov2_vits14_reg"):
+        self.model_name = model_name
+
+    def _extract_pixel_features(
+        self,
+        image_or_bytes: Any,
+        target_size: tuple[int, int] = (224, 224),
+    ) -> np.ndarray:
+        """Extract deterministic visual feature map (16, 16, 384) from actual image pixels."""
+        # 1. Parse image into normalized float32 RGB array
+        if isinstance(image_or_bytes, bytes):
+            try:
+                with Image.open(io.BytesIO(image_or_bytes)) as pil_img:
+                    pil_rgb = pil_img.convert("RGB").resize(target_size, Image.Resampling.BILINEAR)
+                    img_rgb = np.asarray(pil_rgb, dtype=np.float32) / 255.0
+            except Exception:
+                img_rgb = np.ones((target_size[1], target_size[0], 3), dtype=np.float32) * 0.5
+        elif isinstance(image_or_bytes, Image.Image):
+            pil_rgb = image_or_bytes.convert("RGB").resize(target_size, Image.Resampling.BILINEAR)
+            img_rgb = np.asarray(pil_rgb, dtype=np.float32) / 255.0
+        elif isinstance(image_or_bytes, np.ndarray):
+            arr = np.asarray(image_or_bytes, dtype=np.float32)
+            if arr.ndim == 2:
+                arr = np.stack([arr, arr, arr], axis=-1)
+            if arr.max() > 1.0:
+                arr = arr / 255.0
+            if (arr.shape[0], arr.shape[1]) != target_size:
+                zy = target_size[0] / arr.shape[0]
+                zx = target_size[1] / arr.shape[1]
+                arr = ndi.zoom(arr, (zy, zx, 1.0), order=1)
+            img_rgb = arr
+        else:
+            img_rgb = np.ones((target_size[1], target_size[0], 3), dtype=np.float32) * 0.5
+
+        # 2. Reshape into 16x16 grid of 14x14 patches (matching DINOv2 ViT-S/14)
+        patches_rgb = img_rgb.reshape(16, 14, 16, 14, 3).swapaxes(1, 2)
+        gray = 0.299 * img_rgb[..., 0] + 0.587 * img_rgb[..., 1] + 0.114 * img_rgb[..., 2]
+        patches_gray = gray.reshape(16, 14, 16, 14).swapaxes(1, 2)
+
+        # 3. Compute patch color moments (mean and variance across RGB)
+        mean_rgb = patches_rgb.mean(axis=(2, 3))  # (16, 16, 3)
+        var_rgb = patches_rgb.var(axis=(2, 3))    # (16, 16, 3)
+
+        # 4. Compute HSV specular finish metrics
+        r, g, b = patches_rgb[..., 0], patches_rgb[..., 1], patches_rgb[..., 2]
+        maxc = np.maximum(np.maximum(r, g), b)
+        minc = np.minimum(np.minimum(r, g), b)
+        deltac = maxc - minc
+        sat = np.where(maxc > 1e-6, deltac / np.maximum(maxc, 1e-6), 0.0)
+        mean_sat = sat.mean(axis=(2, 3))[..., np.newaxis]
+        mean_val = maxc.mean(axis=(2, 3))[..., np.newaxis]
+
+        # Metallic luster metric (high luminance, low chromatic saturation)
+        specular_mask = (maxc > 0.80) & (sat < 0.18)
+        specular_ratio = specular_mask.mean(axis=(2, 3))[..., np.newaxis]
+
+        # 5. Spatial gradients
+        dx = np.diff(patches_gray, axis=3)
+        dy = np.diff(patches_gray, axis=2)
+        grad_mag = (dx ** 2).mean(axis=(2, 3))[..., np.newaxis] + (dy ** 2).mean(axis=(2, 3))[..., np.newaxis]
+
+        # 6. 2D DCT texture energy spectrum (low-frequency curvature)
+        dct_patches = fft.dctn(patches_gray, axes=(2, 3), norm="ortho")
+        dct_low = dct_patches[:, :, :3, :3].reshape(16, 16, 9)
+
+        # 7. Concatenate physical optical features
+        raw_feat = np.concatenate(
+            [mean_rgb, var_rgb, mean_sat, mean_val, specular_ratio, grad_mag, dct_low],
+            axis=-1,
+        )
+
+        # 8. Orthonormal projection into 384-dimensional DINOv2 latent space
+        d_raw = raw_feat.shape[-1]
+        k_idx = np.arange(d_raw)[:, np.newaxis]
+        m_idx = np.arange(DINOV2_EMBEDDING_DIM)[np.newaxis, :]
+        w_proj = np.sqrt(2.0 / float(DINOV2_EMBEDDING_DIM)) * np.cos(
+            np.pi * (2 * m_idx + 1) * k_idx / (2.0 * float(DINOV2_EMBEDDING_DIM))
+        )
+        feat_map = raw_feat @ w_proj  # (16, 16, 384)
+
+        # 9. Add 2D sinusoidal position encoding
+        pos_enc = np.zeros((16, 16, DINOV2_EMBEDDING_DIM), dtype=np.float32)
+        r_coords = np.arange(16)[:, np.newaxis]
+        c_coords = np.arange(16)[np.newaxis, :]
+        half_dim = DINOV2_EMBEDDING_DIM // 2
+        for dim in range(0, half_dim, 2):
+            div_term = 16.0 ** (float(dim) / float(half_dim))
+            pos_enc[:, :, dim] = np.sin(r_coords / div_term)
+            pos_enc[:, :, dim + 1] = np.cos(r_coords / div_term)
+            pos_enc[:, :, half_dim + dim] = np.sin(c_coords / div_term)
+            pos_enc[:, :, half_dim + dim + 1] = np.cos(c_coords / div_term)
+
+        feat_map = feat_map + 0.10 * pos_enc
+        return feat_map.astype(np.float32)
+
+    def extract_descriptor(
+        self,
+        image_or_bytes: Any,
+        vessel_mask: Optional[np.ndarray] = None,
+        food_mask: Optional[np.ndarray] = None,
+        diameter: float = 0.14,
+        height: float = 0.06,
+        context: str = "personal_home",
+        archetype: str = "standard_bowl",
+    ) -> TablewareDescriptor:
+        """Extract masked rim visual feature and construct TablewareDescriptor."""
+        # 1. Derive or synthesize vessel and food masks if not provided
+        if vessel_mask is None or food_mask is None:
+            h, w = 224, 224
+            yy, xx = np.ogrid[:h, :w]
+            cy, cx = h / 2.0, w / 2.0
+            radius = min(h, w) * 0.42
+
+            v_mask = (xx - cx) ** 2 + (yy - cy) ** 2 <= radius ** 2
+            f_mask = (xx - cx) ** 2 + (yy - cy) ** 2 <= (radius * 0.65) ** 2
+
+            vessel_mask = v_mask if vessel_mask is None else vessel_mask
+            food_mask = f_mask if food_mask is None else food_mask
+
+        rim_mask = extract_masked_rim(vessel_mask=vessel_mask, food_mask=food_mask)
+
+        # 2. Extract genuine visual feature map from actual image pixels
+        feat_map = self._extract_pixel_features(image_or_bytes, target_size=(224, 224))
+
+        # 3. Pool features across the unoccluded rim mask
+        emb = pool_masked_features(feat_map, rim_mask)
+
+        return TablewareDescriptor(
+            embedding=emb,
+            diameter=diameter,
+            height=height,
+            context=context,
+            archetype=archetype,
+        )

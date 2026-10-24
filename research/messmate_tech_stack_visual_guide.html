@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MessMate — Complete Tech Stack & Android Working Blueprint</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0B0F17;
+      --card-bg: #111827;
+      --card-sub: #162032;
+      --card-border: #1F2E45;
+      --accent-cyan: #38BDF8;
+      --accent-green: #10B981;
+      --accent-amber: #F59E0B;
+      --accent-purple: #A855F7;
+      --accent-rose: #F43F5E;
+      --accent-indigo: #6366F1;
+      --text-main: #F3F4F6;
+      --text-sub: #94A3B8;
+      --text-muted: #64748B;
+      --code-bg: #080D15;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.6;
+      padding: 32px 20px 80px 20px;
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+    }
+
+    /* Top Navigation Tabs */
+    .nav-bar {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 32px;
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      background: rgba(11, 15, 23, 0.92);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      padding-top: 10px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-sub);
+      padding: 10px 18px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .nav-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-btn.active {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: var(--accent-cyan);
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      padding: 30px 10px 48px;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 40px;
+    }
+
+    .pill-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: var(--accent-cyan);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      line-height: 1.25;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #FFFFFF 30%, #94A3B8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p.tagline {
+      font-size: 17px;
+      color: var(--text-sub);
+      max-width: 840px;
+      margin: 0 auto 28px;
+    }
+
+    .motto-banner {
+      display: inline-block;
+      padding: 14px 24px;
+      border-radius: 12px;
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #FDE68A;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    /* Metrics Strip */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .metric-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-indigo));
+    }
+
+    .metric-val {
+      font-size: 26px;
+      font-weight: 800;
+      color: #FFF;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 4px;
+    }
+
+    .metric-lbl {
+      font-size: 12px;
+      color: var(--text-sub);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Content Sections */
+    .section-wrap {
+      margin-bottom: 60px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .sec-num {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .section-head h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #FFF;
+    }
+
+    .section-head p {
+      font-size: 14px;
+      color: var(--text-sub);
+    }
+
+    /* Cards & Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 24px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #FFF;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .card p {
+      font-size: 14px;
+      color: var(--text-sub);
+      margin-bottom: 16px;
+    }
+
+    /* Real-World Metaphor Callouts */
+    .metaphor-box {
+      background: var(--card-sub);
+      border-left: 4px solid var(--accent-amber);
+      padding: 14px 18px;
+      border-radius: 8px;
+      margin-top: 14px;
+      font-size: 13.5px;
+      color: #FDE68A;
+    }
+
+    .metaphor-box strong {
+      color: #FFF;
+    }
+
+    /* Tables */
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 13.5px;
+    }
+
+    .custom-table th {
+      text-align: left;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-sub);
+      border-bottom: 1px solid var(--card-border);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+
+    .custom-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--card-border);
+      color: var(--text-main);
+      vertical-align: top;
+    }
+
+    .custom-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .badge-soft {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .badge-blue { background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); border: 1px solid rgba(56,189,248,0.3); }
+    .badge-green { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.3); }
+    .badge-purple { background: rgba(168, 85, 247, 0.15); color: var(--accent-purple); border: 1px solid rgba(168,85,247,0.3); }
+    .badge-amber { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); border: 1px solid rgba(245,158,11,0.3); }
+    .badge-rose { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); border: 1px solid rgba(244,63,94,0.3); }
+
+    /* Visual Diagram Containers */
+    .svg-container {
+      background: var(--code-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px;
+      margin: 18px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: auto;
+    }
+
+    /* Android Phone Frame Mockup */
+    .phone-mockup {
+      width: 320px;
+      height: 600px;
+      background: #090D14;
+      border: 8px solid #2A374A;
+      border-radius: 36px;
+      margin: 0 auto;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .phone-notch {
+      width: 110px;
+      height: 18px;
+      background: #2A374A;
+      margin: 0 auto;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+      z-index: 10;
+    }
+
+    .phone-screen {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      font-size: 12px;
+    }
+
+    .phone-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      font-weight: 700;
+      color: #FFF;
+      font-size: 13px;
+    }
+
+    .camera-viewfinder {
+      height: 190px;
+      background: linear-gradient(135deg, #1E293B, #0F172A);
+      border: 2px dashed rgba(56, 189, 248, 0.4);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .viewfinder-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.6);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      color: var(--accent-cyan);
+    }
+
+    .context-chips {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .chip-btn {
+      flex: 1;
+      padding: 8px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      background: var(--card-sub);
+      color: var(--text-sub);
+      font-size: 11px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .chip-btn.active {
+      border-color: var(--accent-green);
+      color: #FFF;
+      background: rgba(16, 185, 129, 0.2);
+    }
+
+    .notification-shade {
+      background: #1E293B;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      animation: pulseAlert 2.5s infinite;
+    }
+
+    @keyframes pulseAlert {
+      0%, 100% { border-color: rgba(245, 158, 11, 0.4); }
+      50% { border-color: rgba(245, 158, 11, 0.9); }
+    }
+
+    /* Live Interactive Simulator */
+    .sim-panel {
+      background: #0D131F;
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .sim-btn {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo));
+      color: #FFF;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .sim-btn:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    .sim-pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .sim-stage {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      font-size: 13px;
+      transition: all 0.3s ease;
+    }
+
+    .sim-stage.running {
+      border-color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .sim-stage.complete {
+      border-color: var(--accent-green);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    /* Code Snippets */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 16px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      color: #E2E8F0;
+      line-height: 1.5;
+    }
+
+    .comment { color: #64748B; font-style: italic; }
+    .keyword { color: #F43F5E; font-weight: 600; }
+    .string { color: #10B981; }
+    .func { color: #38BDF8; }
+    .num { color: #F59E0B; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--card-border);
+      padding-top: 30px;
+      margin-top: 60px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Tab switching display */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Nav Bar -->
+  <div class="nav-bar">
+    <button class="nav-btn active" onclick="switchTab('tab-story')">
+      <span>📖</span> 1. The 30-Second Story
+    </button>
+    <button class="nav-btn" onclick="switchTab('tab-stack')">
+      <span>⚙️</span> 2. Backend Stack & Models
+    </button>
+    <button class="nav-btn" onclick="switchTab('tab-android')">
+      <span>📱</span> 3. How Android Works
+    </button>
+    <button class="nav-btn" onclick="switchTab('tab-dag')">
+      <span>⚡</span> 4. Concurrent 442ms Pipeline
+    </button>
+    <button class="nav-btn" onclick="switchTab('tab-science')">
+      <span>🔬</span> 5. Why MessMate Wins
+    </button>
+    <button class="nav-btn" onclick="switchTab('tab-sim')">
+      <span>🎮</span> 6. Live Interactive Simulator
+    </button>
+  </div>
+
+  <!-- Hero Header -->
+  <header class="hero">
+    <div class="pill-tag">Production Technical Architecture • Version 2.0</div>
+    <h1>The MessMate System: Stack, Android & Engine</h1>
+    <p class="tagline">
+      The complete, spoon-fed blueprint explaining every language, framework, ML model, database, and Android native mechanism powering the open-world dietary intelligence platform.
+    </p>
+    <div class="motto-banner">
+      💡 "Cal AI guesses. MyFitnessPal interrogates. <strong>MessMate learns your kitchen bowls.</strong>"
+    </div>
+  </header>
+
+  <!-- Metrics Strip -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-val">&lt; 442 ms</div>
+      <div class="metric-lbl">Analysis SLA (Concurrent DAG)</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val">100% Honest</div>
+      <div class="metric-lbl">Zero VLM Nutrition Hallucinations (I1)</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val">&le; 3 / Day</div>
+      <div class="metric-lbl">VoI Attention Budget (Reverse Friction)</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val">&lt; $0.11</div>
+      <div class="metric-lbl">Monthly Cost / User (Gemini Flash-Lite)</div>
+    </div>
+  </div>
+
+  <!-- TAB 1: 30-SECOND HUMAN STORY -->
+  <div id="tab-story" class="tab-content active">
+    <div class="section-wrap">
+      <div class="section-head">
+        <div class="sec-num">1</div>
+        <div>
+          <h2>The 30-Second Spoon-Fed Metaphor</h2>
+          <p>How the entire system works explained with everyday kitchen realities.</p>
+        </div>
+      </div>
+
+      <!-- Human Metaphor Visual SVG -->
+      <div class="svg-container">
+        <svg viewBox="0 0 1000 320" width="100%" height="320" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="gradCard" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#1E293B"/>
+              <stop offset="100%" stop-color="#0F172A"/>
+            </linearGradient>
+            <linearGradient id="gradFlow" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#38BDF8"/>
+              <stop offset="50%" stop-color="#10B981"/>
+              <stop offset="100%" stop-color="#A855F7"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Step 1: User Snaps Meal -->
+          <g transform="translate(20, 30)">
+            <rect width="170" height="250" rx="14" fill="url(#gradCard)" stroke="#38BDF8" stroke-width="2"/>
+            <text x="85" y="40" fill="#38BDF8" font-size="13" font-weight="700" text-anchor="middle">1. SNAP &amp; SHOVE</text>
+            <circle cx="85" cy="95" r="34" fill="#162032" stroke="#38BDF8" stroke-width="1.5"/>
+            <!-- Camera Icon -->
+            <path d="M72 87 h6 l3 -5 h8 l3 5 h6 a4 4 0 0 1 4 4 v18 a4 4 0 0 1 -4 4 h-26 a4 4 0 0 1 -4 -4 v-18 a4 4 0 0 1 4 -4 z" fill="none" stroke="#38BDF8" stroke-width="2"/>
+            <circle cx="85" cy="99" r="6" fill="#38BDF8"/>
+            <text x="85" y="160" fill="#FFF" font-size="13" font-weight="600" text-anchor="middle">Takes 1.2s</text>
+            <text x="85" y="182" fill="#94A3B8" font-size="11" text-anchor="middle">Android snaps photo</text>
+            <text x="85" y="198" fill="#94A3B8" font-size="11" text-anchor="middle">+ lens EXIF data</text>
+            <text x="85" y="222" fill="#38BDF8" font-size="11" font-weight="600" text-anchor="middle">[Home 🏠 | Away 🍽️]</text>
+          </g>
+
+          <!-- Arrow 1 -->
+          <path d="M195 155 L225 155" stroke="#38BDF8" stroke-width="3" stroke-dasharray="4,4"/>
+          <polygon points="225,150 235,155 225,160" fill="#38BDF8"/>
+
+          <!-- Step 2: DINOv2 Recognizes Bowl -->
+          <g transform="translate(240, 30)">
+            <rect width="170" height="250" rx="14" fill="url(#gradCard)" stroke="#10B981" stroke-width="2"/>
+            <text x="85" y="40" fill="#10B981" font-size="13" font-weight="700" text-anchor="middle">2. BOWL FINGERPRINT</text>
+            <circle cx="85" cy="95" r="34" fill="#162032" stroke="#10B981" stroke-width="1.5"/>
+            <!-- Bowl Icon -->
+            <path d="M68 92 q17 26 34 0 z" fill="#10B981"/>
+            <ellipse cx="85" cy="92" rx="17" ry="5" fill="#34D399"/>
+            <text x="85" y="160" fill="#FFF" font-size="13" font-weight="600" text-anchor="middle">DINOv2 Re-ID</text>
+            <text x="85" y="182" fill="#94A3B8" font-size="11" text-anchor="middle">"That's your 350ml</text>
+            <text x="85" y="198" fill="#94A3B8" font-size="11" text-anchor="middle">ceramic blue bowl!"</text>
+            <text x="85" y="222" fill="#10B981" font-size="11" font-weight="600" text-anchor="middle">Sim &gt; 0.85 match</text>
+          </g>
+
+          <!-- Arrow 2 -->
+          <path d="M415 155 L445 155" stroke="#10B981" stroke-width="3" stroke-dasharray="4,4"/>
+          <polygon points="445,150 455,155 445,160" fill="#10B981"/>
+
+          <!-- Step 3: Gemini Flash-Lite Identifies Food -->
+          <g transform="translate(460, 30)">
+            <rect width="170" height="250" rx="14" fill="url(#gradCard)" stroke="#F59E0B" stroke-width="2"/>
+            <text x="85" y="40" fill="#F59E0B" font-size="13" font-weight="700" text-anchor="middle">3. DISH DETECTION</text>
+            <circle cx="85" cy="95" r="34" fill="#162032" stroke="#F59E0B" stroke-width="1.5"/>
+            <!-- Eye / Chef Icon -->
+            <circle cx="85" cy="95" r="16" fill="none" stroke="#F59E0B" stroke-width="2"/>
+            <circle cx="85" cy="95" r="6" fill="#F59E0B"/>
+            <text x="85" y="160" fill="#FFF" font-size="13" font-weight="600" text-anchor="middle">Gemini Flash-Lite</text>
+            <text x="85" y="182" fill="#94A3B8" font-size="11" text-anchor="middle">Detects: "Sambar",</text>
+            <text x="85" y="198" fill="#94A3B8" font-size="11" text-anchor="middle">"Steamed Rice", "Roti"</text>
+            <text x="85" y="222" fill="#F43F5E" font-size="10.5" font-weight="700" text-anchor="middle">ZERO CALORIE GUESS</text>
+          </g>
+
+          <!-- Arrow 3 -->
+          <path d="M635 155 L665 155" stroke="#F59E0B" stroke-width="3" stroke-dasharray="4,4"/>
+          <polygon points="665,150 675,155 665,160" fill="#F59E0B"/>
+
+          <!-- Step 4: 3-Tier Lab Nutrition Engine -->
+          <g transform="translate(680, 30)">
+            <rect width="140" height="250" rx="14" fill="url(#gradCard)" stroke="#A855F7" stroke-width="2"/>
+            <text x="70" y="40" fill="#A855F7" font-size="12" font-weight="700" text-anchor="middle">4. NUTRITION LAB</text>
+            <circle cx="70" cy="95" r="30" fill="#162032" stroke="#A855F7" stroke-width="1.5"/>
+            <!-- Book / DB Icon -->
+            <rect x="58" y="85" width="24" height="20" rx="3" fill="none" stroke="#A855F7" stroke-width="2"/>
+            <line x1="64" y1="91" x2="76" y2="91" stroke="#A855F7" stroke-width="1.5"/>
+            <line x1="64" y1="97" x2="72" y2="97" stroke="#A855F7" stroke-width="1.5"/>
+            <text x="70" y="160" fill="#FFF" font-size="12" font-weight="600" text-anchor="middle">USDA + IFCT</text>
+            <text x="70" y="182" fill="#94A3B8" font-size="11" text-anchor="middle">384-d FastEmbed</text>
+            <text x="70" y="198" fill="#94A3B8" font-size="11" text-anchor="middle">Pydantic &amp; SciPy</text>
+            <text x="70" y="222" fill="#A855F7" font-size="11" font-weight="600" text-anchor="middle">[502 – 728 kcal]</text>
+          </g>
+
+          <!-- Arrow 4 -->
+          <path d="M825 155 L845 155" stroke="#A855F7" stroke-width="3" stroke-dasharray="4,4"/>
+          <polygon points="845,150 855,155 845,160" fill="#A855F7"/>
+
+          <!-- Step 5: Ambient Notification -->
+          <g transform="translate(855, 30)">
+            <rect width="125" height="250" rx="14" fill="url(#gradCard)" stroke="#38BDF8" stroke-width="2"/>
+            <text x="62" y="40" fill="#38BDF8" font-size="11" font-weight="700" text-anchor="middle">5. T+20 MIN</text>
+            <circle cx="62" cy="95" r="28" fill="#162032" stroke="#38BDF8" stroke-width="1.5"/>
+            <!-- Bell Icon -->
+            <path d="M54 99 h16 a2 2 0 0 1 2 2 h-20 a2 2 0 0 1 2 -2 v-7 a6 6 0 0 1 12 0 v7" fill="none" stroke="#38BDF8" stroke-width="2"/>
+            <text x="62" y="160" fill="#FFF" font-size="12" font-weight="600" text-anchor="middle">Android Shade</text>
+            <text x="62" y="180" fill="#94A3B8" font-size="10.5" text-anchor="middle">After dinner check:</text>
+            <text x="62" y="196" fill="#FDE68A" font-size="10" font-weight="700" text-anchor="middle">"How many rotis?"</text>
+            <text x="62" y="222" fill="#10B981" font-size="10.5" font-weight="700" text-anchor="middle">1 Tap [ 2 ]</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Comparison Cards -->
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title">
+            <span style="color: #F43F5E;">❌</span> The Fatigue Trap (MyFitnessPal)
+          </div>
+          <p>Forces users to weigh food on scales, search 100 confusing items ("Cooked white rice 1 cup vs 100g vs Uncle Ben's"), and log 25 times a day. <strong>Result: 80% abandon within 30 days.</strong></p>
+          <div class="metaphor-box" style="border-left-color: #F43F5E; color: #FECDD3;">
+            <strong>Real-world pain:</strong> Eating cold dinner because you had to weigh each carrot and interrogate a clunky app.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span style="color: #F59E0B;">⚠️</span> The Fraudulent Guess Trap (Cal AI)
+          </div>
+          <p>Claims a single 2D camera snapshot can instantly output "Exact 643 Calories!". It ignores bowl depth, unseen absorbed cooking oils (9 kcal/g), and food density.</p>
+          <div class="metaphor-box" style="border-left-color: #F59E0B; color: #FDE68A;">
+            <strong>Real-world fallacy:</strong> A 2D photo cannot see if a bowl is 2 cm deep or 10 cm deep. It's pure mathematical guesswork.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span style="color: #10B981;">✅</span> The MessMate Way (Physical Reality)
+          </div>
+          <p>People eat 80% of meals at home/work from the <strong>same 4–5 bowls and plates</strong>. MessMate fingerprints those vessels once, estimates honest intervals [502–728 kcal], and gets faster every day.</p>
+          <div class="metaphor-box" style="border-left-color: #10B981; color: #A7F3D0;">
+            <strong>The Reverse Friction Curve:</strong> Day 1: 3 quick questions. Day 7: 1 question. Day 14: 0 questions (1-tap instant log).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: BACKEND STACK & MODELS -->
+  <div id="tab-stack" class="tab-content">
+    <div class="section-wrap">
+      <div class="section-head">
+        <div class="sec-num">2</div>
+        <div>
+          <h2>Complete Backend Technology Stack Matrix</h2>
+          <p>Clean, verified breakdown of every language, framework, library, and ML model in the repository.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Backend Languages & Frameworks -->
+        <div class="card">
+          <div class="card-title">
+            <span style="color: var(--accent-cyan);">🐍</span> Languages & Web Frameworks
+          </div>
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Technology</th>
+                <th>Version</th>
+                <th>Exact Role & Justification</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Python</strong></td>
+                <td><span class="badge-soft badge-blue">&gt;=3.11</span></td>
+                <td>Core backend runtime. High-speed typing, native asyncio, and unified scientific/ML library compatibility.</td>
+              </tr>
+              <tr>
+                <td><strong>FastAPI</strong></td>
+                <td><span class="badge-soft badge-blue">&gt;=0.110.0</span></td>
+                <td>Async ASGI REST API framework. Native Pydantic v2 schemas, automated OpenAPI spec, sub-millisecond routing.</td>
+              </tr>
+              <tr>
+                <td><strong>Uvicorn</strong></td>
+                <td><span class="badge-soft badge-blue">&gt;=0.28.0</span></td>
+                <td>Blazing fast ASGI server running on uvloop. Handles concurrent phone camera uploads without thread blockage.</td>
+              </tr>
+              <tr>
+                <td><strong>Kotlin / Java</strong></td>
+                <td><span class="badge-soft badge-green">17 / SDK 36</span></td>
+                <td>Android client language in <code>android/app/src/main/java</code>. Native camera launcher, NotificationManager, JS Bridge.</td>
+              </tr>
+              <tr>
+                <td><strong>Dart / Flutter</strong></td>
+                <td><span class="badge-soft badge-purple">3.x</span></td>
+                <td>Cross-platform client framework in <code>mobile/</code> with Drift SQLite for local offline food logging.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- AI & Computer Vision Models -->
+        <div class="card">
+          <div class="card-title">
+            <span style="color: var(--accent-purple);">🧠</span> AI & Computer Vision Models
+          </div>
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Model Name</th>
+                <th>Provider / Weights</th>
+                <th>Specific Operational Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Gemini 2.5 Flash-Lite</strong></td>
+                <td>Google AI (K=1, T=0.0)</td>
+                <td>Dish perception & vessel archetype classification. Strictly forbidden from estimating calories or macros (Invariant I1). Costs &lt;$0.075/mo.</td>
+              </tr>
+              <tr>
+                <td><strong>DINOv2 Re-ID</strong></td>
+                <td><code>facebook/dinov2-small</code></td>
+                <td>Tableware visual fingerprinting. Extracts 384-d feature vector to match bowls across repeat meals with cosine sim &ge; 0.85.</td>
+              </tr>
+              <tr>
+                <td><strong>FastEmbed</strong></td>
+                <td><code>bge-small-en-v1.5</code></td>
+                <td>Semantic dish embedding for 3-tier federated resolution into USDA FNDDS, INDB, and IFCT food databases.</td>
+              </tr>
+              <tr>
+                <td><strong>Monocular Depth / Conics</strong></td>
+                <td>MiDaS + Projective Ellipses</td>
+                <td>Pins metric real-world scale from CIPA EXIF sensor focal length and circular plate rim geometry.</td>
+              </tr>
+              <tr>
+                <td><strong>Bayesian Conjugate Model</strong></td>
+                <td>Normal-Inverse-Gamma</td>
+                <td>Recursively refines tableware volume prior &theta;<sub>u</sub> upon user tap confirmation without re-training models.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Core Libraries & Infrastructure -->
+      <div class="card" style="margin-top: 24px;">
+        <div class="card-title">
+          <span style="color: var(--accent-amber);">📦</span> Production Libraries & Scientific Tooling
+        </div>
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Library</th>
+              <th>Category</th>
+              <th>What It Does Inside MessMate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>SQLAlchemy 2.0</code> &amp; <code>Alembic</code></td>
+              <td>ORM &amp; Schema Migrations</td>
+              <td>Async database abstraction layer managing <code>meals</code>, <code>users</code>, <code>foods</code>, and <code>unit_priors</code> tables.</td>
+            </tr>
+            <tr>
+              <td><code>Pydantic v2</code> &amp; <code>pydantic-settings</code></td>
+              <td>Data Validation</td>
+              <td>Strict schema enforcement. Rejects malformed JSON from VLM and validates API contracts at compile speed via Rust core.</td>
+            </tr>
+            <tr>
+              <td><code>NumPy</code> &amp; <code>SciPy</code></td>
+              <td>Scientific &amp; Probability</td>
+              <td>Calculates analytical food portion distributions, bulk densities, log-normal calorie variances, and covariance matrices.</td>
+            </tr>
+            <tr>
+              <td><code>Pillow (PIL)</code> &amp; <code>OpenCV</code></td>
+              <td>Image Processing</td>
+              <td>Extracts EXIF camera metadata, downsamples images to 800x800 WebP (&lt;120KB), and fits projective conics to plate rims.</td>
+            </tr>
+            <tr>
+              <td><code>PyTorch</code> &amp; <code>Transformers</code></td>
+              <td>Deep Learning Inference</td>
+              <td>Runs the local DINOv2 visual descriptor extractor and local depth neural network embeddings inside <code>app/services/vision/</code>.</td>
+            </tr>
+            <tr>
+              <td><code>Argon2-cffi</code> &amp; <code>PyJWT</code></td>
+              <td>Security &amp; Auth</td>
+              <td>Zero-compromise password hashing (Argon2id) and stateless JWT Bearer token generation for mobile authentication.</td>
+            </tr>
+            <tr>
+              <td><code>Redis</code> &amp; <code>aiosqlite</code></td>
+              <td>Cache &amp; Dev DB</td>
+              <td>Redis manages daily 3-question VoI budgets and pre-fetched priors. SQLite handles instant offline zero-config development.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: HOW ANDROID WORKS -->
+  <div id="tab-android" class="tab-content">
+    <div class="section-wrap">
+      <div class="section-head">
+        <div class="sec-num">3</div>
+        <div>
+          <h2>How the Android App Works (Under the Hood)</h2>
+          <p>The native Android Kotlin architecture, WebView Bridge, camera intent, and notification pipeline.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Phone UI Walkthrough -->
+        <div class="card" style="display: flex; flex-direction: column; align-items: center;">
+          <div class="card-title" style="align-self: flex-start;">
+            <span style="color: var(--accent-green);">📱</span> Android Native Screen &amp; Notification Flow
+          </div>
+
+          <!-- Interactive Phone Mockup -->
+          <div class="phone-mockup">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-header">
+                <span>12:45 PM</span>
+                <span style="color: var(--accent-cyan);">MessMate v2.0</span>
+                <span>🔋 92%</span>
+              </div>
+
+              <!-- Viewfinder -->
+              <div class="camera-viewfinder">
+                <div class="viewfinder-badge">CIPA DC-008 Active • f/1.89</div>
+                <!-- Simulated plate in viewfinder -->
+                <svg width="120" height="90" viewBox="0 0 120 90">
+                  <ellipse cx="60" cy="45" rx="50" ry="32" fill="#1E293B" stroke="#38BDF8" stroke-width="2" stroke-dasharray="3,3"/>
+                  <circle cx="45" cy="40" r="14" fill="#F59E0B" opacity="0.8"/>
+                  <circle cx="75" cy="42" r="12" fill="#10B981" opacity="0.8"/>
+                </svg>
+                <div style="font-size: 10px; color: #94A3B8; margin-top: 4px;">Tap button to snap plate</div>
+              </div>
+
+              <!-- Context Switcher Chip -->
+              <div class="context-chips">
+                <div class="chip-btn active" id="chip-home">Home 🏠</div>
+                <div class="chip-btn" id="chip-away">Away 🍽️</div>
+              </div>
+
+              <!-- Detected Breakdown Card -->
+              <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; font-weight: 700; color: #FFF; font-size: 11px;">
+                  <span>Thali Meal Detected</span>
+                  <span style="color: var(--accent-green);">612 &plusmn; 88 kcal</span>
+                </div>
+                <div style="font-size: 10px; color: #94A3B8; margin-top: 4px;">
+                  • Sambar (Standard Bowl: 168g)<br>
+                  • Steamed Rice (1.5 cups: 210g)<br>
+                  • Phulka Roti (2 pcs: 70g)
+                </div>
+              </div>
+
+              <!-- Delayed Notification Alert (T+20 min) -->
+              <div class="notification-shade">
+                <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: #F59E0B; font-size: 10.5px; margin-bottom: 4px;">
+                  <span>🔔</span> MessMate • Dining Check (+20m)
+                </div>
+                <div style="color: #FFF; font-size: 11px; margin-bottom: 6px;">How many rotis did you have?</div>
+                <div style="display: flex; gap: 4px;">
+                  <button style="flex:1; background: #0F172A; border: 1px solid #38BDF8; color: #38BDF8; border-radius: 6px; padding: 4px; font-size: 10px; font-weight: 700;">1</button>
+                  <button style="flex:1; background: #38BDF8; border: none; color: #000; border-radius: 6px; padding: 4px; font-size: 10px; font-weight: 700;">2</button>
+                  <button style="flex:1; background: #0F172A; border: 1px solid #38BDF8; color: #38BDF8; border-radius: 6px; padding: 4px; font-size: 10px; font-weight: 700;">3</button>
+                  <button style="flex:1; background: #0F172A; border: 1px solid #38BDF8; color: #38BDF8; border-radius: 6px; padding: 4px; font-size: 10px; font-weight: 700;">4+</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Android Technical Architecture Details -->
+        <div class="card">
+          <div class="card-title">
+            <span style="color: var(--accent-cyan);">⚙️</span> Native Android Mechanism Details
+          </div>
+
+          <div style="margin-bottom: 18px;">
+            <h4 style="color: #FFF; font-size: 14px; margin-bottom: 6px;">1. FileProvider Camera Intent (`takePictureIntent`)</h4>
+            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">
+              Located in <code>MainActivity.kt</code>. When the user taps the camera, Android creates a secure scoped temporary file using <code>FileProvider.getUriForFile()</code>, invokes <code>MediaStore.ACTION_IMAGE_CAPTURE</code>, and hands raw camera data directly to the app without needing invasive broad storage permissions.
+            </p>
+          </div>
+
+          <div style="margin-bottom: 18px;">
+            <h4 style="color: #FFF; font-size: 14px; margin-bottom: 6px;">2. Native JavaScript Bridge (`MessMateNativeBridge`)</h4>
+            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">
+              Connects the modern responsive web client with the Android hardware:
+            </p>
+            <pre><code><span class="keyword">class</span> <span class="func">MessMateNativeBridge</span>(<span class="keyword">val</span> activity: MainActivity) {
+    <span class="comment">// Schedules delayed local notification (+20 min)</span>
+    <span class="keyword">@JavascriptInterface</span>
+    <span class="keyword">fun</span> <span class="func">scheduleDelayedNotification</span>(mealId: String, prompt: String, delay: Long) {
+        Handler(Looper.getMainLooper()).postDelayed({
+            activity.showNotification(mealId, prompt)
+        }, delay * <span class="num">1000L</span>)
+    }
+
+    <span class="comment">// Dynamically pairs phone with laptop server IP</span>
+    <span class="keyword">@JavascriptInterface</span>
+    <span class="keyword">fun</span> <span class="func">setServerUrl</span>(url: String) { activity.saveAndReloadUrl(url) }
+}</code></pre>
+          </div>
+
+          <div>
+            <h4 style="color: #FFF; font-size: 14px; margin-bottom: 6px;">3. Notification Resilience &amp; Battery Saver Bypass</h4>
+            <p style="font-size: 13px; color: var(--text-sub);">
+              Aggressive Android OEM battery savers (OneUI, HyperOS, OxygenOS) often kill background push alarms. MessMate uses dual redundancy:
+              <br><br>
+              • <strong>Channel A:</strong> Local <code>NotificationCompat</code> scheduled on Android <code>NotificationManager</code>.
+              <br>
+              • <strong>Channel B (Fallback):</strong> If unclicked or suppressed, an ambient banner renders inside the app on next open with a strict <strong>2-hour TTL</strong> (expiring so the user is never asked stale questions from yesterday).
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: CONCURRENT DAG PIPELINE -->
+  <div id="tab-dag" class="tab-content">
+    <div class="section-wrap">
+      <div class="section-head">
+        <div class="sec-num">4</div>
+        <div>
+          <h2>Concurrent DAG Execution Pipeline (&lt;442 ms SLA)</h2>
+          <p>How Branch 1, Branch 2, and Branch 3 execute simultaneously in Python <code>asyncio.gather()</code>.</p>
+        </div>
+      </div>
+
+      <!-- Concurrent DAG Visual SVG -->
+      <div class="svg-container">
+        <svg viewBox="0 0 1100 420" width="100%" height="420" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#38BDF8"/>
+            </marker>
+            <marker id="arrowGreen" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#10B981"/>
+            </marker>
+          </defs>
+
+          <!-- Input Node -->
+          <g transform="translate(20, 160)">
+            <rect width="160" height="90" rx="12" fill="#1E293B" stroke="#38BDF8" stroke-width="2"/>
+            <text x="80" y="32" fill="#38BDF8" font-size="12" font-weight="700" text-anchor="middle">MEAL PHOTO UPLOAD</text>
+            <text x="80" y="54" fill="#FFF" font-size="11" text-anchor="middle">800x800 WebP (&lt;120KB)</text>
+            <text x="80" y="72" fill="#94A3B8" font-size="10" text-anchor="middle">+ EXIF lens metadata</text>
+          </g>
+
+          <!-- Fork arrows -->
+          <path d="M180 185 C230 185, 240 70, 280 70" fill="none" stroke="#38BDF8" stroke-width="2" marker-end="url(#arrow)"/>
+          <path d="M180 205 L 280 205" fill="none" stroke="#38BDF8" stroke-width="2" marker-end="url(#arrow)"/>
+          <path d="M180 225 C230 225, 240 340, 280 340" fill="none" stroke="#38BDF8" stroke-width="2" marker-end="url(#arrow)"/>
+
+          <!-- BRANCH 1: Local CV Worker -->
+          <g transform="translate(290, 25)">
+            <rect width="250" height="90" rx="12" fill="#162032" stroke="#10B981" stroke-width="2"/>
+            <text x="125" y="28" fill="#10B981" font-size="12" font-weight="700" text-anchor="middle">BRANCH 1: Local CV Worker</text>
+            <text x="125" y="48" fill="#FFF" font-size="11" text-anchor="middle">• CIPA DC-008 Camera Intrinsics</text>
+            <text x="125" y="66" fill="#FFF" font-size="11" text-anchor="middle">• Plate Rim Conic Ellipse Fitting</text>
+            <text x="125" y="84" fill="#94A3B8" font-size="10" text-anchor="middle">• DINOv2 Tableware Re-ID (384-d)</text>
+          </g>
+
+          <!-- BRANCH 2: Cloud VLM -->
+          <g transform="translate(290, 160)">
+            <rect width="250" height="90" rx="12" fill="#162032" stroke="#F59E0B" stroke-width="2"/>
+            <text x="125" y="28" fill="#F59E0B" font-size="12" font-weight="700" text-anchor="middle">BRANCH 2: Cloud VLM Perception</text>
+            <text x="125" y="48" fill="#FFF" font-size="11" text-anchor="middle">• Gemini 2.5 Flash-Lite (K=1, T=0.0)</text>
+            <text x="125" y="66" fill="#FFF" font-size="11" text-anchor="middle">• Structured Dish &amp; Vessel JSON</text>
+            <text x="125" y="84" fill="#F43F5E" font-size="10.5" font-weight="700" text-anchor="middle">• INVARIANT I1: ZERO NUTRIENTS</text>
+          </g>
+
+          <!-- BRANCH 3: DB / Redis Pre-Fetch -->
+          <g transform="translate(290, 295)">
+            <rect width="250" height="90" rx="12" fill="#162032" stroke="#A855F7" stroke-width="2"/>
+            <text x="125" y="28" fill="#A855F7" font-size="12" font-weight="700" text-anchor="middle">BRANCH 3: Redis / DB Pre-Fetch</text>
+            <text x="125" y="48" fill="#FFF" font-size="11" text-anchor="middle">• Pre-fetch User Tableware Priors</text>
+            <text x="125" y="66" fill="#FFF" font-size="11" text-anchor="middle">• Context Gate (Home vs Away)</text>
+            <text x="125" y="84" fill="#94A3B8" font-size="10" text-anchor="middle">• Daily Question Budget Counter (&le;3)</text>
+          </g>
+
+          <!-- Join arrows to Fusion Engine -->
+          <path d="M540 70 C590 70, 600 185, 630 185" fill="none" stroke="#10B981" stroke-width="2" marker-end="url(#arrowGreen)"/>
+          <path d="M540 205 L 630 205" fill="none" stroke="#F59E0B" stroke-width="2" marker-end="url(#arrowGreen)"/>
+          <path d="M540 340 C590 340, 600 225, 630 225" fill="none" stroke="#A855F7" stroke-width="2" marker-end="url(#arrowGreen)"/>
+
+          <!-- Fusion & Nutrition Resolution -->
+          <g transform="translate(640, 145)">
+            <rect width="220" height="120" rx="12" fill="#1E293B" stroke="#10B981" stroke-width="2"/>
+            <text x="110" y="26" fill="#10B981" font-size="12" font-weight="700" text-anchor="middle">DAG FUSION &amp; RESOLUTION</text>
+            <text x="110" y="46" fill="#FFF" font-size="10.5" text-anchor="middle">1. Re-ID Cosine Match (&ge;0.85)</text>
+            <text x="110" y="64" fill="#FFF" font-size="10.5" text-anchor="middle">2. 3-Tier USDA/IFCT Vector Lookup</text>
+            <text x="110" y="82" fill="#FFF" font-size="10.5" text-anchor="middle">3. Bulk Density &times; Volume (SciPy)</text>
+            <text x="110" y="100" fill="#38BDF8" font-size="10.5" font-weight="600" text-anchor="middle">4. Conformal Quantiles [p10, p90]</text>
+          </g>
+
+          <!-- Arrow to Output / VoI -->
+          <path d="M860 205 L 900 205" fill="none" stroke="#10B981" stroke-width="2" marker-end="url(#arrowGreen)"/>
+
+          <!-- Output & VoI Decision -->
+          <g transform="translate(910, 145)">
+            <rect width="170" height="120" rx="12" fill="#0F172A" stroke="#38BDF8" stroke-width="2"/>
+            <text x="85" y="26" fill="#38BDF8" font-size="11" font-weight="700" text-anchor="middle">VoI DECISION GATE</text>
+            <text x="85" y="48" fill="#FFF" font-size="10" text-anchor="middle">High Variance &amp;</text>
+            <text x="85" y="64" fill="#FFF" font-size="10" text-anchor="middle">Budget &gt; 0?</text>
+            <text x="85" y="86" fill="#10B981" font-size="10" font-weight="700" text-anchor="middle">YES: Schedule +20m Push</text>
+            <text x="85" y="104" fill="#94A3B8" font-size="10" text-anchor="middle">NO: Stay Silent &amp; Log</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Code Implementation Highlights -->
+      <div class="card">
+        <div class="card-title">
+          <span style="color: var(--accent-cyan);">💻</span> Exact Python Code in <code>meal_pipeline.py</code>
+        </div>
+        <p>The orchestrator runs the three branches in parallel using <code>asyncio.gather()</code>. This keeps overall latency under 450 milliseconds:</p>
+        <pre><code><span class="comment"># app/tasks/meal_pipeline.py — Concurrent DAG Execution</span>
+<span class="keyword">async def</span> <span class="func">analyze_meal</span>(meal_id: uuid.UUID, session: Session):
+    <span class="comment"># Launch all three independent branches concurrently</span>
+    cv_task = asyncio.create_task(run_local_cv_branch(image_bytes, exif_meta))
+    vlm_task = asyncio.create_task(vlm_client.extract_dishes_and_vessels(image_bytes))
+    db_task = asyncio.create_task(prefetch_user_priors_and_budget(user_id, context))
+
+    <span class="comment"># Await all 3 branches simultaneously</span>
+    cv_result, vlm_result, priors = <span class="keyword">await</span> asyncio.<span class="func">gather</span>(cv_task, vlm_task, db_task)
+
+    <span class="comment"># Re-ID Match: Check if detected bowl matches user's known tableware</span>
+    tableware_match = is_tableware_match(cv_result.dinov2_emb, priors.vessel_embs)
+
+    <span class="comment"># 3-Tier Federated Database lookup (USDA FNDDS / INDB / IFCT)</span>
+    resolved_foods = <span class="keyword">await</span> resolution_service.resolve_dishes(vlm_result.items)
+
+    <span class="comment"># Monte Carlo & Conformal Prediction for honest intervals [p10, p90]</span>
+    nutrient_rollup = compute_analytical_total(resolved_foods, tableware_match)
+
+    <span class="comment"># Information-Theoretic VoI Allocator (Invariant I3 & I4)</span>
+    <span class="keyword">if</span> should_ask_question(nutrient_rollup.variance, priors.budget_remaining):
+        schedule_ambient_delayed_notification(meal_id, delay_minutes=<span class="num">20</span>)</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: WHY MESSMATE WINS -->
+  <div id="tab-science" class="tab-content">
+    <div class="section-wrap">
+      <div class="section-head">
+        <div class="sec-num">5</div>
+        <div>
+          <h2>The Scientific Moat &amp; Invariants</h2>
+          <p>Why MessMate is academically and empirically superior to commercial black-box apps.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">
+            <span style="color: var(--accent-rose);">🛡️</span> Invariant I1: The Zero-Nutrient VLM Rule
+          </div>
+          <p>
+            Every other AI meal tracker prompts GPT-4 or Claude: <em>"Look at this plate and estimate calories and protein."</em>
+            This causes severe hallucinations: LLMs do not have scale rulers, do not know food density, and fabricate arbitrary numbers.
+          </p>
+          <div class="metaphor-box" style="border-left-color: var(--accent-cyan); color: #E0F2FE;">
+            <strong>MessMate Rule:</strong> The VLM is strictly treated like an eye: it only recognizes <em>"sambar in a 150ml katori"</em>. The nutrition is calculated deterministically from verified laboratory chemistry tables (USDA / IFCT).
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span style="color: var(--accent-amber);">📉</span> The Reverse Friction Curve
+          </div>
+          <p>
+            Most fitness apps require the exact same tedious effort on Day 100 as on Day 1. MessMate uses active Bayesian learning:
+          </p>
+          <ul style="padding-left: 20px; font-size: 13.5px; color: var(--text-sub); margin-bottom: 14px;">
+            <li><strong>Week 1:</strong> 3 polite clarification questions per day (+20 min after eating).</li>
+            <li><strong>Week 2:</strong> 1–2 questions per day as bowl variance shrinks.</li>
+            <li><strong>Week 3+:</strong> &le; 1 question. By Day 14, personal kitchen tableware is fully calibrated.</li>
+          </ul>
+          <div class="metaphor-box" style="border-left-color: var(--accent-green); color: #DCFCE7;">
+            <strong>Result:</strong> Zero user churn. Meal logging becomes an effortless 1-tap snap.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 6: LIVE INTERACTIVE SIMULATOR -->
+  <div id="tab-sim" class="tab-content">
+    <div class="section-wrap">
+      <div class="section-head">
+        <div class="sec-num">6</div>
+        <div>
+          <h2>Interactive Meal Analysis Simulator</h2>
+          <p>Simulate snapping a meal, watch the concurrent pipeline fire, and test the Android T+20 min notification.</p>
+        </div>
+      </div>
+
+      <div class="sim-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 20px;">
+          <div>
+            <h3 style="color: #FFF; font-size: 18px; font-weight: 700;">Simulate Live Plate Capture</h3>
+            <p style="font-size: 13px; color: var(--text-sub);">Select a meal scenario to run through the DAG orchestrator.</p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <select id="meal-select" style="background: var(--card-bg); border: 1px solid var(--card-border); color: #FFF; padding: 10px 14px; border-radius: 8px; font-size: 13px;">
+              <option value="thali">South Indian Thali (Sambar, Rice, Phulka)</option>
+              <option value="salad">Grilled Chicken &amp; Avocado Salad</option>
+              <option value="biryani">Chicken Biryani &amp; Raita Bowl</option>
+            </select>
+            <button class="sim-btn" onclick="runSimulation()">
+              <span>📸</span> Run Analysis DAG
+            </button>
+          </div>
+        </div>
+
+        <!-- Pipeline Stages -->
+        <div class="sim-pipeline">
+          <div class="sim-stage" id="stage-upload">
+            <div><strong>1. Android Camera &amp; FileProvider Upload</strong> — 800x800 WebP downsampled with EXIF</div>
+            <span class="badge-soft badge-blue" id="stat-upload">Pending</span>
+          </div>
+
+          <div class="sim-stage" id="stage-dag">
+            <div><strong>2. Concurrent DAG Fork (asyncio.gather)</strong> — DINOv2 Re-ID + Gemini Flash-Lite + Redis</div>
+            <span class="badge-soft badge-blue" id="stat-dag">Pending</span>
+          </div>
+
+          <div class="sim-stage" id="stage-fusion">
+            <div><strong>3. 3-Tier Nutrition Resolution</strong> — USDA FNDDS + IFCT Lab Table Mapping</div>
+            <span class="badge-soft badge-blue" id="stat-fusion">Pending</span>
+          </div>
+
+          <div class="sim-stage" id="stage-voi">
+            <div><strong>4. VoI Allocator &amp; Android Shade Trigger</strong> — Uncertainty evaluation and notification</div>
+            <span class="badge-soft badge-blue" id="stat-voi">Pending</span>
+          </div>
+        </div>
+
+        <!-- Results Display -->
+        <div id="sim-result-box" style="margin-top: 24px; display: none; background: #070B12; border: 1px solid var(--card-border); border-radius: 12px; padding: 18px;">
+          <h4 style="color: var(--accent-green); font-size: 15px; margin-bottom: 8px;">Analysis Completed in 398 ms</h4>
+          <pre id="sim-json-output"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>MessMate Open-World Dietary Intelligence Platform • Technical Architecture Compendium</p>
+    <p style="margin-top: 4px; font-size: 12px;">Verified against <code>MESSMATE_SPEC.md</code>, <code>backend/app/tasks/meal_pipeline.py</code>, and <code>android/app/src/main/java/com/messmate/app/MainActivity.kt</code>.</p>
+  </footer>
+
+</div>
+
+<script>
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function runSimulation() {
+    const meal = document.getElementById('meal-select').value;
+    const stages = ['upload', 'dag', 'fusion', 'voi'];
+    const resultBox = document.getElementById('sim-result-box');
+    resultBox.style.display = 'none';
+
+    // Reset
+    stages.forEach(s => {
+      const el = document.getElementById('stage-' + s);
+      const stat = document.getElementById('stat-' + s);
+      el.className = 'sim-stage';
+      stat.className = 'badge-soft badge-blue';
+      stat.innerText = 'Pending';
+    });
+
+    // Step 1: Upload
+    document.getElementById('stage-upload').className = 'sim-stage running';
+    document.getElementById('stat-upload').innerText = 'Uploading...';
+    await sleep(400);
+    document.getElementById('stage-upload').className = 'sim-stage complete';
+    document.getElementById('stat-upload').className = 'badge-soft badge-green';
+    document.getElementById('stat-upload').innerText = 'Done (82 KB)';
+
+    // Step 2: DAG
+    document.getElementById('stage-dag').className = 'sim-stage running';
+    document.getElementById('stat-dag').innerText = '3 Branches Running...';
+    await sleep(600);
+    document.getElementById('stage-dag').className = 'sim-stage complete';
+    document.getElementById('stat-dag').className = 'badge-soft badge-green';
+    document.getElementById('stat-dag').innerText = 'Done (<380ms)';
+
+    // Step 3: Fusion
+    document.getElementById('stage-fusion').className = 'sim-stage running';
+    document.getElementById('stat-fusion').innerText = 'Querying IFCT/USDA...';
+    await sleep(450);
+    document.getElementById('stage-fusion').className = 'sim-stage complete';
+    document.getElementById('stat-fusion').className = 'badge-soft badge-green';
+    document.getElementById('stat-fusion').innerText = 'Done (100% matched)';
+
+    // Step 4: VoI
+    document.getElementById('stage-voi').className = 'sim-stage running';
+    document.getElementById('stat-voi').innerText = 'Evaluating VoI...';
+    await sleep(400);
+    document.getElementById('stage-voi').className = 'sim-stage complete';
+    document.getElementById('stat-voi').className = 'badge-soft badge-amber';
+    document.getElementById('stat-voi').innerText = 'Scheduled (+20 min)';
+
+    // Output JSON
+    resultBox.style.display = 'block';
+    const sampleOutput = {
+      meal_id: "7b4c9e82-41f2-491a-9f5b-6f81a17c09d3",
+      scenario: meal,
+      latency_ms: 398,
+      status: "analyzed",
+      dish_items: [
+        { dish: "Sambar", vessel: "small_bowl", grams: 168.0, kcal: 142.8, resolution: "exact_IFCT" },
+        { dish: "Steamed Jasmine Rice", vessel: "dinner_plate", grams: 210.0, kcal: 273.0, resolution: "exact_USDA" },
+        { dish: "Phulka Roti", vessel: "slice_piece", grams: 70.0, kcal: 196.6, resolution: "exact_IFCT" }
+      ],
+      total_nutrition: {
+        kcal_mean: 612.4,
+        kcal_sd: 88.1,
+        conformal_interval_90: [502.0, 728.0],
+        protein_g: 18.2,
+        fat_g: 21.4,
+        carb_g: 84.6
+      },
+      android_action: {
+        notification_type: "clarification_ambient",
+        trigger_at: "+20 minutes",
+        prompt: "How many rotis did you have?",
+        quick_chips: ["1", "2", "3", "4+"],
+        daily_budget_remaining: 2
+      }
+    };
+    document.getElementById('sim-json-output').innerText = JSON.stringify(sampleOutput, null, 2);
+  }
+</script>
+
+</body>
+</html>

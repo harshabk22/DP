@@ -1,0 +1,486 @@
+"""Context-Gated Conjugate Normal-Normal Bayesian Updater.
+
+Adheres to MESSMATE_SPEC.md §6.2 and Master Blueprint §3:
+- Dual-Estimator Architecture:
+    * Unbiased mean: V_mean = exp(mu + sigma2 / 2.0) for daily calorie tracking (resolves Jensen's inequality bias).
+    * Conformal median: V_median = exp(mu) for equivariant uncertainty intervals.
+    * Exact variance: Var(V) = (exp(sigma2) - 1) * exp(2*mu + sigma2).
+- 2nd-order Taylor centering shift: x_t* = ln(V_obs / n) + 1 / (24 * n^2).
+- Tap discretization noise decay: tau^2_eff = tau^2_base + 1 / (12 * n^2).
+- Context gate: Personal tableware priors are strictly frozen for commercial/restaurant meals (E=0).
+- Guard: Non-positive or sub-0.5 unit counts are rejected.
+- Density factoring: mass decoupled into volume (theta_u,m) and certified bulk density (rho_d).
+- Dynamic 2.8-sigma residual gate to filter VLM hallucinations and misclassifications.
+- Directed 3-strike outlier reset with Immediate State Absorption:
+    * Consecutive deviations in the same direction inflate variance to 0.15 AND immediately absorb x_t*.
+- Thali Joint Anomaly Shield (The Feast Trap Guard):
+    * If mean standardized residual across K dishes exceeds 2.8 / sqrt(K), activates GLOBAL_FEAST_SHIELD_ACTIVE
+      and freezes tableware priors (Delta mu = 0, Delta sigma2 = 0).
+- Anti-collapse mathematical variance floor: sigma^2_min = 0.01 (guarantees Kalman gain K_t >= 0.0750).
+"""
+
+import math
+from typing import Optional, Sequence
+from pydantic import BaseModel, ConfigDict, Field
+
+# Algorithmic constants (§3 Master Blueprint)
+SIGMA2_MIN: float = 0.01  # Anti-collapse variance floor (guarantees K_t >= 0.0750)
+TAU2_BASE_MIN: float = 0.04  # Minimum optical observation variance
+INFLATED_SIGMA2: float = 0.15  # Strike-3 tableware reset variance
+FEAST_SHIELD_THRESHOLD_FACTOR: float = 2.8  # Multi-dish joint innovation factor
+GLOBAL_FEAST_SHIELD_FLAG: str = "GLOBAL_FEAST_SHIELD_ACTIVE"
+
+
+class PriorUpdateResult(BaseModel):
+    """Result of Bayesian prior update calculation."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    mu_new: float = Field(..., description="Updated log-volume mean parameter")
+    sigma2_new: float = Field(..., description="Updated log-volume variance parameter")
+    was_updated: bool = Field(..., description="True if posterior was modified or reset")
+    reason: str = Field(
+        ...,
+        description="Audit outcome reason: conjugate_update, outlier_reset_inflated, away_dining_frozen, gated_outlier, invalid_count, GLOBAL_FEAST_SHIELD_ACTIVE",
+    )
+    consecutive_rejects: int = Field(default=0, description="Count of directional consecutive rejected observations")
+    last_reject_sign: int = Field(default=0, description="Sign of last rejected residual (-1, 0, +1)")
+    residual: Optional[float] = Field(default=None, description="Absolute error |x_obs_star - mu_prior|")
+    tau2_eff: Optional[float] = Field(default=None, description="Effective observation variance including discretization noise")
+    x_obs: Optional[float] = Field(default=None, description="Observed single-serving log volume (x_obs_star)")
+    x_obs_star: Optional[float] = Field(default=None, description="2nd-order Taylor-shifted log volume")
+
+
+class PortionEstimate(BaseModel):
+    """Analytical portion mass and calorie distribution moments."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    mu_log: float = Field(..., description="Location parameter of log-normal mass distribution")
+    sigma2_log: float = Field(..., description="Scale parameter (variance) of log-normal mass distribution")
+    grams_mean: float = Field(..., description="Analytical unbiased mean in linear grams: exp(mu + sigma2/2)")
+    grams_median: float = Field(default=0.0, description="Conformal equivariant median in linear grams: exp(mu)")
+    grams_var: float = Field(default=0.0, description="Exact analytical variance in linear grams: (exp(sigma2) - 1) * exp(2*mu + sigma2)")
+    grams_sd: float = Field(..., description="Analytical standard deviation in linear grams")
+    kcal_mean: float = Field(..., description="Expected calorie content from unbiased mean")
+    kcal_median: float = Field(default=0.0, description="Calorie content from conformal median")
+    kcal_var: float = Field(default=0.0, description="Exact calorie variance in kcal^2")
+    kcal_sd: float = Field(..., description="Calorie uncertainty (standard deviation)")
+    ask_value: float = Field(..., description="Candidate ask value v_i = kcal_sd (Thali-robust)")
+    v_mean: float = Field(default=0.0, description="Container unbiased volume mean: exp(theta + sigma2/2)")
+    v_median: float = Field(default=0.0, description="Container conformal volume median: exp(theta)")
+    v_var: float = Field(default=0.0, description="Container volume variance in ml^2")
+
+
+class ThaliShieldResult(BaseModel):
+    """Evaluation result for Thali Joint Anomaly Feast Shield (§3.6)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    is_shield_active: bool = Field(..., description="True if Feast Shield is triggered")
+    mean_z: float = Field(..., description="Mean standardized residual across K dishes")
+    threshold: float = Field(..., description="Threshold 2.8 / sqrt(K)")
+    k_vessels: int = Field(..., description="Number of dishes/vessels K")
+    flag: str = Field(default="", description="'GLOBAL_FEAST_SHIELD_ACTIVE' if active, else empty")
+
+
+class ThaliDishInput(BaseModel):
+    """Input parameters for a single dish on a multi-vessel thali."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    prior_mu: float
+    prior_s2: float
+    g_vlm: float
+    n_user: Optional[float]
+    rho_dish: float
+    is_home: bool = True
+    consecutive_rejects: int = 0
+    last_reject_sign: int = 0
+    conf: float = 1.0
+    occ_penalty: float = 0.0
+
+
+def compute_lognormal_analytical_moments(
+    mu: float, sigma2: float
+) -> tuple[float, float, float, float]:
+    """Compute exact analytical moments for lognormal distribution (§3.2).
+
+    1. Unbiased mean: E[V] = exp(mu + sigma2 / 2)
+    2. Conformal median: Med[V] = exp(mu)
+    3. Variance: Var(V) = (exp(sigma2) - 1) * exp(2*mu + sigma2)
+    4. Standard deviation: SD(V) = sqrt(Var(V)) = E[V] * sqrt(exp(sigma2) - 1)
+
+    Returns:
+        tuple[mean, median, variance, sd]
+    """
+    mean = math.exp(mu + sigma2 / 2.0)
+    median = math.exp(mu)
+    variance = (math.exp(sigma2) - 1.0) * math.exp(2.0 * mu + sigma2)
+    sd = math.sqrt(max(variance, 0.0))
+    return mean, median, variance, sd
+
+
+def compute_dual_volume_estimators(mu: float, sigma2: float) -> tuple[float, float]:
+    """Compute Dual Estimators resolving Jensen's Inequality bias (§3.2).
+
+    1. Unbiased mean estimator: V_mean = exp(mu + sigma2 / 2.0)
+       Used for additive daily energy balance to eliminate up to 7.79% under-reporting.
+    2. Conformal median estimator: V_median = exp(mu)
+       Used for equivariant uncertainty intervals and conformal bounds.
+
+    Returns:
+        tuple[v_mean, v_median] in ml.
+    """
+    mean, median, _, _ = compute_lognormal_analytical_moments(mu, sigma2)
+    return mean, median
+
+
+def compute_conformal_bounds(
+    mu: float,
+    sigma: float,
+    q_hat: float = 1.645,
+) -> tuple[float, float]:
+    """Conformal prediction interval bounds around median estimator (§3.2):
+
+    C_{0.90}(V) = [exp(mu - q_hat * sigma), exp(mu + q_hat * sigma)].
+    """
+    lower = math.exp(mu - q_hat * sigma)
+    upper = math.exp(mu + q_hat * sigma)
+    return lower, upper
+
+
+def evaluate_thali_joint_anomaly(
+    standardized_residuals: Sequence[float],
+    min_z_threshold: Optional[float] = None,
+) -> ThaliShieldResult:
+    """Evaluate Thali Joint Anomaly Shield across K vessels on a thali (§3.6).
+
+    If mean standardized residual across K dishes exceeds 2.8 / sqrt(K),
+    activates GLOBAL_FEAST_SHIELD_ACTIVE to freeze tableware priors,
+    protecting against holiday feasts and camera scale hallucinations.
+
+    Args:
+        standardized_residuals: Sequence of standardized residuals z_k = (x_k^* - mu_k) / sigma_pred_k.
+        min_z_threshold: Optional per-vessel floor (e.g. min_k z_k > 1.2).
+                         If None, evaluates purely on mean residual > 2.8 / sqrt(K).
+
+    Returns:
+        ThaliShieldResult with is_shield_active and audit flag.
+    """
+    if not standardized_residuals:
+        return ThaliShieldResult(
+            is_shield_active=False,
+            mean_z=0.0,
+            threshold=FEAST_SHIELD_THRESHOLD_FACTOR,
+            k_vessels=0,
+            flag="",
+        )
+
+    k = len(standardized_residuals)
+    mean_z = float(sum(standardized_residuals) / k)
+    threshold = FEAST_SHIELD_THRESHOLD_FACTOR / math.sqrt(k)
+
+    is_active = mean_z > threshold
+    if min_z_threshold is not None:
+        is_active = is_active and (min(standardized_residuals) > min_z_threshold)
+
+    flag = GLOBAL_FEAST_SHIELD_FLAG if is_active else ""
+    return ThaliShieldResult(
+        is_shield_active=is_active,
+        mean_z=mean_z,
+        threshold=threshold,
+        k_vessels=k,
+        flag=flag,
+    )
+
+
+def update_unit_prior(
+    prior_mu: float,
+    prior_s2: float,
+    g_vlm: float,
+    n_user: Optional[float],
+    rho_dish: float,
+    is_home: bool,
+    consecutive_rejects: int = 0,
+    last_reject_sign: int = 0,
+    conf: float = 1.0,
+    occ_penalty: float = 0.0,
+    global_feast_shield: bool = False,
+) -> PriorUpdateResult:
+    """Perform context-gated conjugate Normal-Normal Bayesian tableware prior update.
+
+    Args:
+        prior_mu: Current prior mean log-volume theta_{u,m}.
+        prior_s2: Current prior log-volume variance sigma^2_{u,m}.
+        g_vlm: VLM-estimated mass in grams.
+        n_user: User-confirmed discrete count (e.g. 1.0, 2.0). If None or < 0.5, update is skipped.
+        rho_dish: Food physical bulk density in g/ml.
+        is_home: True if personal home dining (E=1); False if commercial/away dining (E=0).
+        consecutive_rejects: Running strike counter for directed outlier reset.
+        last_reject_sign: Sign of previous outlier (+1 or -1).
+        conf: VLM confidence score in (0, 1].
+        occ_penalty: Additional variance penalty for visual occlusion.
+        global_feast_shield: If True, feast trap shield is active; prior updates are frozen.
+
+    Returns:
+        PriorUpdateResult with posterior moments and convergence audit metadata.
+    """
+    # 0. Feast Trap Shield: Protect personal tableware priors from multi-dish feast inflation
+    if global_feast_shield:
+        return PriorUpdateResult(
+            mu_new=prior_mu,
+            sigma2_new=prior_s2,
+            was_updated=False,
+            reason=GLOBAL_FEAST_SHIELD_FLAG,
+            consecutive_rejects=consecutive_rejects,
+            last_reject_sign=last_reject_sign,
+        )
+
+    # 1. Context gate: Never personalize restaurant tableware (E=0)
+    if not is_home:
+        return PriorUpdateResult(
+            mu_new=prior_mu,
+            sigma2_new=prior_s2,
+            was_updated=False,
+            reason="away_dining_frozen",
+            consecutive_rejects=consecutive_rejects,
+            last_reject_sign=last_reject_sign,
+        )
+
+    # 2. Guard: Sub-serving or missing counts cannot calibrate vessel volume
+    if n_user is None or n_user < 0.5:
+        return PriorUpdateResult(
+            mu_new=prior_mu,
+            sigma2_new=prior_s2,
+            was_updated=False,
+            reason="invalid_count",
+            consecutive_rejects=consecutive_rejects,
+            last_reject_sign=last_reject_sign,
+        )
+
+    # 3. Input sanitation and observed log-volume derivation with 2nd-order centering shift
+    g_eff = max(float(g_vlm), 1.0)
+    rho_eff = max(float(rho_dish), 0.01)
+    n_eff = float(n_user)
+    prior_s2_eff = max(float(prior_s2), SIGMA2_MIN)
+
+    v_obs = g_eff / rho_eff
+    # 2nd-order Taylor centering shift: x_t* = ln(V_obs / n) + 1 / (24 * n^2) (§3.3)
+    x_obs_star = math.log(v_obs / n_eff) + 1.0 / (24.0 * (n_eff ** 2))
+
+    # 4. Observation variance with tap discretization noise decay
+    # tau^2_eff = tau^2_base + 1 / (12 * n^2) (§3.3)
+    conf_clamped = max(float(conf), 1e-4)
+    tau2_base = max(TAU2_BASE_MIN, (0.20 / conf_clamped) ** 2 + max(0.0, float(occ_penalty)))
+    tau2_eff = tau2_base + 1.0 / (12.0 * (n_eff ** 2))
+
+    # 5. Dynamic 2.8-sigma residual gate & Immediate Strike-3 absorption
+    sigma_pred = math.sqrt(prior_s2_eff + tau2_eff)
+    diff = x_obs_star - prior_mu
+    residual = abs(diff)
+    current_sign = 1 if diff > 0 else (-1 if diff < 0 else 0)
+
+    if residual > 2.8 * sigma_pred:
+        # Directed 3-strike outlier reset: only increment if sign matches
+        if consecutive_rejects > 0 and current_sign == last_reject_sign and current_sign != 0:
+            new_consecutive_rejects = consecutive_rejects + 1
+            new_reject_sign = last_reject_sign
+        else:
+            new_consecutive_rejects = 1
+            new_reject_sign = current_sign
+
+        if new_consecutive_rejects >= 3:
+            # Strike-3 Immediate State Absorption Patch (§3.5):
+            # User likely changed tableware set; inflate variance to 0.15 AND immediately absorb x_obs_star
+            inflated_s2 = INFLATED_SIGMA2
+            k_reset = inflated_s2 / (inflated_s2 + tau2_eff)
+            mu_new = prior_mu + k_reset * (x_obs_star - prior_mu)
+            sigma2_new = max((1.0 - k_reset) * inflated_s2, SIGMA2_MIN)
+            return PriorUpdateResult(
+                mu_new=mu_new,
+                sigma2_new=sigma2_new,
+                was_updated=True,
+                reason="outlier_reset_inflated",
+                consecutive_rejects=0,
+                last_reject_sign=0,
+                residual=residual,
+                tau2_eff=tau2_eff,
+                x_obs=x_obs_star,
+                x_obs_star=x_obs_star,
+            )
+        else:
+            return PriorUpdateResult(
+                mu_new=prior_mu,
+                sigma2_new=prior_s2_eff,
+                was_updated=False,
+                reason="gated_outlier",
+                consecutive_rejects=new_consecutive_rejects,
+                last_reject_sign=new_reject_sign,
+                residual=residual,
+                tau2_eff=tau2_eff,
+                x_obs=x_obs_star,
+                x_obs_star=x_obs_star,
+            )
+
+    # 6. Conjugate Normal-Normal Bayesian update (§3.4)
+    # K_t = prior_s2_eff / (prior_s2_eff + tau2_eff)
+    k_t = prior_s2_eff / (prior_s2_eff + tau2_eff)
+    mu_new = prior_mu + k_t * (x_obs_star - prior_mu)
+    s2_new = (1.0 - k_t) * prior_s2_eff
+
+    # 7. Anti-collapse variance floor: guarantees K_t >= 0.0750 (§3.4)
+    s2_new = max(s2_new, SIGMA2_MIN)
+
+    return PriorUpdateResult(
+        mu_new=mu_new,
+        sigma2_new=s2_new,
+        was_updated=True,
+        reason="conjugate_update",
+        consecutive_rejects=0,
+        last_reject_sign=0,
+        residual=residual,
+        tau2_eff=tau2_eff,
+        x_obs=x_obs_star,
+        x_obs_star=x_obs_star,
+    )
+
+
+def update_thali_priors(
+    dishes: Sequence[ThaliDishInput],
+    min_z_threshold: Optional[float] = None,
+) -> tuple[list[PriorUpdateResult], ThaliShieldResult]:
+    """Perform joint Bayesian prior updates across all dishes on a thali meal (§3.6).
+
+    Evaluates joint standardized residuals. If mean z > 2.8 / sqrt(K),
+    activates GLOBAL_FEAST_SHIELD_ACTIVE and freezes all prior updates.
+
+    Returns:
+        tuple[list[PriorUpdateResult], ThaliShieldResult].
+    """
+    if not dishes:
+        shield_res = evaluate_thali_joint_anomaly([])
+        return [], shield_res
+
+    # 1. Compute standardized residuals for all eligible home dishes
+    residuals: list[float] = []
+    dish_meta: list[tuple[float, float, float]] = []  # (prior_s2, tau2_eff, x_obs_star)
+
+    for d in dishes:
+        if d.is_home and d.n_user is not None and d.n_user >= 0.5:
+            g_eff = max(float(d.g_vlm), 1.0)
+            rho_eff = max(float(d.rho_dish), 0.01)
+            n_eff = float(d.n_user)
+            prior_s2_eff = max(float(d.prior_s2), SIGMA2_MIN)
+
+            v_obs = g_eff / rho_eff
+            x_star = math.log(v_obs / n_eff) + 1.0 / (24.0 * (n_eff ** 2))
+
+            conf_clamped = max(float(d.conf), 1e-4)
+            tau2_base = max(TAU2_BASE_MIN, (0.20 / conf_clamped) ** 2 + max(0.0, float(d.occ_penalty)))
+            tau2_eff = tau2_base + 1.0 / (12.0 * (n_eff ** 2))
+
+            sigma_pred = math.sqrt(prior_s2_eff + tau2_eff)
+            z_k = (x_star - d.prior_mu) / sigma_pred
+            residuals.append(z_k)
+            dish_meta.append((prior_s2_eff, tau2_eff, x_star))
+        else:
+            dish_meta.append((max(float(d.prior_s2), SIGMA2_MIN), 0.10, 0.0))
+
+    # 2. Evaluate joint anomaly
+    shield_res = evaluate_thali_joint_anomaly(residuals, min_z_threshold=min_z_threshold)
+
+    # 3. Update priors respecting feast shield
+    results: list[PriorUpdateResult] = []
+    for d in dishes:
+        res = update_unit_prior(
+            prior_mu=d.prior_mu,
+            prior_s2=d.prior_s2,
+            g_vlm=d.g_vlm,
+            n_user=d.n_user,
+            rho_dish=d.rho_dish,
+            is_home=d.is_home,
+            consecutive_rejects=d.consecutive_rejects,
+            last_reject_sign=d.last_reject_sign,
+            conf=d.conf,
+            occ_penalty=d.occ_penalty,
+            global_feast_shield=shield_res.is_shield_active,
+        )
+        results.append(res)
+
+    return results, shield_res
+
+
+def calculate_portion_distribution(
+    theta_um: float,
+    sigma2_um: float,
+    rho_d: float,
+    n: float = 1.0,
+    kcal_per_100g: float = 0.0,
+    is_vessel: bool = True,
+    meal_noise: float = 0.02,
+) -> PortionEstimate:
+    """Calculate analytical log-normal portion and calorie distribution moments.
+
+    Enforces Dual-Estimator Architecture (§3.2):
+    - Unbiased mean estimator: grams_mean = exp(mu_log + sigma2_total / 2.0)
+    - Conformal median estimator: grams_median = exp(mu_log)
+    - Exact variance: grams_var = (exp(sigma2_total) - 1) * exp(2*mu_log + sigma2_total)
+
+    Enforces physical density factoring:
+        mu_log = theta_{u,m} + ln(rho_d) + ln(n) for vessels
+        mu_log = theta_{u,m} + ln(n) for mass units / somatic rulers
+
+    Args:
+        theta_um: Latent volume prior parameter in ln(ml) (or ln(g) for mass units).
+        sigma2_um: Tableware prior variance.
+        rho_d: Bulk food density in g/ml.
+        n: Discrete portion count multiplier.
+        kcal_per_100g: Certified food energy density in kcal/100g.
+        is_vessel: True if volumetric vessel (bowl, plate, cup); False if mass/somatic unit.
+        meal_noise: Serving-to-serving variance (default 0.02).
+
+    Returns:
+        PortionEstimate with linear gram and calorie moments, and ask value v_i.
+    """
+    n_clamped = max(float(n), 0.01)
+    rho_eff = max(float(rho_d), 0.01)
+
+    if is_vessel:
+        mu_log = theta_um + math.log(rho_eff) + math.log(n_clamped)
+        v_mean, v_median, v_var, _ = compute_lognormal_analytical_moments(theta_um, sigma2_um)
+    else:
+        mu_log = theta_um + math.log(n_clamped)
+        v_mean, v_median, v_var, _ = compute_lognormal_analytical_moments(theta_um, sigma2_um)
+
+    sigma2_total = max(float(sigma2_um), 1e-6) + max(float(meal_noise), 0.0)
+
+    # Analytical log-normal moments in linear grams (§3.2)
+    grams_mean, grams_median, grams_var, grams_sd = compute_lognormal_analytical_moments(
+        mu_log, sigma2_total
+    )
+
+    # Calorie moments
+    kcal_per_g = max(float(kcal_per_100g), 0.0) / 100.0
+    kcal_mean = grams_mean * kcal_per_g
+    kcal_median = grams_median * kcal_per_g
+    kcal_var = grams_var * (kcal_per_g ** 2)
+    kcal_sd = grams_sd * kcal_per_g
+    ask_value = kcal_sd
+
+    return PortionEstimate(
+        mu_log=mu_log,
+        sigma2_log=sigma2_total,
+        grams_mean=grams_mean,
+        grams_median=grams_median,
+        grams_var=grams_var,
+        grams_sd=grams_sd,
+        kcal_mean=kcal_mean,
+        kcal_median=kcal_median,
+        kcal_var=kcal_var,
+        kcal_sd=kcal_sd,
+        ask_value=ask_value,
+        v_mean=v_mean,
+        v_median=v_median,
+        v_var=v_var,
+    )

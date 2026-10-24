@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MessMate Backend Engine — Interactive Visual Walkthrough</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0B0F19;
+      --card-bg: #111827;
+      --card-border: #1F2937;
+      --accent-blue: #38BDF8;
+      --accent-emerald: #10B981;
+      --accent-amber: #F59E0B;
+      --accent-purple: #8B5CF6;
+      --accent-rose: #F43F5E;
+      --text-main: #F3F4F6;
+      --text-muted: #9CA3AF;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      line-height: 1.5;
+      padding: 32px 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent-blue);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 15px;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    /* Master Timeline Bar */
+    .timeline-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 36px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .timeline-header h3 {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .execution-timer {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      padding: 4px 12px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--accent-emerald);
+      font-weight: 700;
+    }
+
+    .steps-nav {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 8px;
+    }
+    .step-btn {
+      background: #1F2937;
+      border: 1px solid #374151;
+      padding: 10px 6px;
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    .step-btn:hover {
+      background: #2D3748;
+      color: #FFFFFF;
+    }
+    .step-btn.active {
+      background: #0284C7;
+      border-color: #38BDF8;
+      color: #FFFFFF;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    }
+
+    /* Main Showcase Grid */
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 36px;
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 12px;
+    }
+
+    /* The Real-World Plate Visualizer */
+    .plate-wrapper {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      background: radial-gradient(circle, #1E293B 0%, #0F172A 100%);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    svg.meal-svg {
+      width: 360px;
+      height: 360px;
+    }
+
+    /* Dynamic Stage Info Card */
+    .stage-card {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .stage-badge-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .tag {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .tag-blue { background: rgba(56,189,248,0.15); color: #38BDF8; border: 1px solid rgba(56,189,248,0.3); }
+    .tag-emerald { background: rgba(16,185,129,0.15); color: #10B981; border: 1px solid rgba(16,185,129,0.3); }
+    .tag-amber { background: rgba(245,158,11,0.15); color: #F59E0B; border: 1px solid rgba(245,158,11,0.3); }
+
+    .stage-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #FFFFFF;
+    }
+    .stage-desc {
+      font-size: 14px;
+      color: #D1D5DB;
+      line-height: 1.6;
+    }
+
+    .math-box {
+      background: #090D16;
+      border: 1px solid #1E293B;
+      border-radius: 8px;
+      padding: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #38BDF8;
+      position: relative;
+    }
+    .math-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .human-box {
+      background: rgba(16, 185, 129, 0.05);
+      border-left: 3px solid var(--accent-emerald);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+    }
+    .human-box-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--accent-emerald);
+      margin-bottom: 4px;
+    }
+    .human-box-text {
+      font-size: 13px;
+      color: #E2E8F0;
+    }
+
+    /* All 9 Stages Matrix */
+    .stages-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .stage-mini-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .stage-mini-card:hover {
+      border-color: var(--accent-blue);
+      transform: translateY(-2px);
+    }
+    .mini-num {
+      font-size: 11px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-blue);
+      margin-bottom: 4px;
+    }
+    .mini-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 6px;
+    }
+    .mini-speed {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-emerald);
+    }
+
+    @media (max-width: 900px) {
+      .showcase-grid { grid-template-columns: 1fr; }
+      .steps-nav { grid-template-columns: repeat(3, 1fr); }
+      .stages-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="badge">MessMate Real-World Engineering Blueprint</div>
+      <h1>How the MessMate Backend Works (Spoon-Fed Walkthrough)</h1>
+      <p class="subtitle">
+        A step-by-step interactive breakdown showing what actually happens in the 0.8 seconds after a meal photo is snapped: from camera ray projection down to 188-cycle CPU Bayesian calibration.
+      </p>
+    </header>
+
+    <!-- Master Interactive Scrub Bar -->
+    <div class="timeline-container">
+      <div class="timeline-header">
+        <h3>
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Sub-Second Processing Pipeline
+        </h3>
+        <div class="execution-timer" id="time-display">T + 0.13s (Total Pipeline: 0.80s)</div>
+      </div>
+      <div class="steps-nav">
+        <button class="step-btn" onclick="selectStep(1)">1. Scale</button>
+        <button class="step-btn" onclick="selectStep(2)">2. Segs</button>
+        <button class="step-btn" onclick="selectStep(3)">3. Tableware</button>
+        <button class="step-btn active" onclick="selectStep(4)">4. Bayesian</button>
+        <button class="step-btn" onclick="selectStep(5)">5. CUSUM</button>
+        <button class="step-btn" onclick="selectStep(6)">6. Mass</button>
+        <button class="step-btn" onclick="selectStep(7)">7. RAG DB</button>
+        <button class="step-btn" onclick="selectStep(8)">8. VoI Active</button>
+        <button class="step-btn" onclick="selectStep(9)">9. Conformal</button>
+      </div>
+    </div>
+
+    <!-- Active Stage Visual Showcase -->
+    <div class="showcase-grid">
+      
+      <!-- Visual Display Panel (SVG Plate) -->
+      <div class="panel">
+        <div class="panel-title">
+          <span id="visual-title">Visual Focus: Tableware Bayesian Memory</span>
+          <span class="tag tag-emerald" id="visual-model">Log-Normal Conjugate</span>
+        </div>
+        <div class="plate-wrapper">
+          <svg class="meal-svg" viewBox="0 0 400 400" id="plate-svg">
+            <!-- Base Stainless / Ceramic Thali Plate -->
+            <circle cx="200" cy="200" r="185" fill="#334155" stroke="#64748B" stroke-width="6" id="outer-rim"/>
+            <circle cx="200" cy="200" r="170" fill="#1E293B" stroke="#475569" stroke-width="2" id="inner-rim"/>
+
+            <!-- Bowl 1: Dal (Top Left) -->
+            <g id="bowl-dal">
+              <circle cx="130" cy="120" r="55" fill="#1E293B" stroke="#F59E0B" stroke-width="3" stroke-dasharray="4,2"/>
+              <circle cx="130" cy="120" r="48" fill="#D97706" opacity="0.85"/>
+              <text x="130" y="125" text-anchor="middle" fill="#FFFFFF" font-size="11" font-weight="700">Lentil Dal</text>
+              <text x="130" y="140" text-anchor="middle" fill="#FEF3C7" font-size="9" id="dal-sub">160g | 165 kcal</text>
+            </g>
+
+            <!-- Bowl 2: Paneer / Curry (Top Right) -->
+            <g id="bowl-curry">
+              <circle cx="270" cy="120" r="55" fill="#1E293B" stroke="#EF4444" stroke-width="3" stroke-dasharray="4,2"/>
+              <circle cx="270" cy="120" r="48" fill="#B91C1C" opacity="0.85"/>
+              <text x="270" y="125" text-anchor="middle" fill="#FFFFFF" font-size="11" font-weight="700">Paneer Curry</text>
+              <text x="270" y="140" text-anchor="middle" fill="#FEE2E2" font-size="9" id="curry-sub">120g | 240 kcal</text>
+            </g>
+
+            <!-- Main Mound: Steamed Rice (Bottom Center) -->
+            <g id="mound-rice">
+              <path d="M 120 250 Q 200 190 280 250 Q 250 320 150 320 Z" fill="#F1F5F9" opacity="0.9" stroke="#94A3B8" stroke-width="2"/>
+              <text x="200" y="270" text-anchor="middle" fill="#0F172A" font-size="13" font-weight="800">Steamed Rice</text>
+              <text x="200" y="288" text-anchor="middle" fill="#475569" font-size="10" font-weight="600" id="rice-sub">220g | 286 kcal</text>
+            </g>
+
+            <!-- Side Condiment: Coconut Chutney / Pickle (Right Side) -->
+            <g id="condiment-chutney">
+              <circle cx="330" cy="220" r="26" fill="#10B981" opacity="0.9" stroke="#059669" stroke-width="2"/>
+              <text x="330" y="224" text-anchor="middle" fill="#FFFFFF" font-size="8" font-weight="700">Chutney</text>
+            </g>
+
+            <!-- Dynamic Highlight Overlays (Manipulated via JS) -->
+            <circle cx="200" cy="200" r="185" fill="none" stroke="#38BDF8" stroke-width="4" id="highlight-ring" opacity="0.9" style="transition: all 0.3s ease;"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Explanatory Data & Math Panel -->
+      <div class="panel">
+        <div class="panel-title">
+          <span>Backend Logic & Math Engine</span>
+          <span class="tag tag-blue" id="stage-runtime">Runtime: 0.002 ms</span>
+        </div>
+        <div class="stage-card">
+          <div class="stage-badge-row">
+            <span class="tag tag-blue" id="stage-number">Stage 4 of 9</span>
+            <span class="tag tag-amber" id="stage-algo">Algorithm: Log-Normal Conjugacy</span>
+          </div>
+
+          <div class="stage-title" id="stage-title-text">Bayesian Tableware Volume Calibration</div>
+          <div class="stage-desc" id="stage-desc-text">
+            Instead of trusting a single noisy 2D optical photo, the backend uses conjugate Bayesian updating. Your plate's known volume serves as the prior distribution, and today's optical volume serves as the observation with a discretization noise shield.
+          </div>
+
+          <div class="math-box">
+            <div class="math-label">Exact Formula Executed on CPU</div>
+            <div id="math-formula">
+              &sigma;<sub>obs</sub>&sup2; = &sigma;<sub>optical</sub>&sup2; + 1/(12n&sup2;)<br>
+              &mu;<sub>post</sub> = &sigma;<sub>post</sub>&sup2; &times; (&mu;<sub>prior</sub>/&sigma;<sub>prior</sub>&sup2; + ln(V<sub>obs</sub>)/&sigma;<sub>obs</sub>&sup2;)<br>
+              1/&sigma;<sub>post</sub>&sup2; = 1/&sigma;<sub>prior</sub>&sup2; + 1/&sigma;<sub>obs</sub>&sup2;
+            </div>
+          </div>
+
+          <div class="human-box">
+            <div class="human-box-title">Why this matters (Spoon-Fed)</div>
+            <div class="human-box-text" id="human-desc">
+              Every day you eat on the same plate, single-image optical noise cancels out. Over 10 meals, error approaches zero without you ever needing to place a credit card on the table or buy a LiDAR sensor.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Complete 9-Stage Index Cards -->
+    <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 12px; color: #FFFFFF;">Explore All 9 Backend Stages</h3>
+    <div class="stages-grid">
+      <div class="stage-mini-card" onclick="selectStep(1)">
+        <div class="mini-num">STAGE 01</div>
+        <div class="mini-title">Metric Scale from EXIF</div>
+        <div class="mini-speed">Pinhole Geometry • 0.02s</div>
+      </div>
+      <div class="stage-mini-card" onclick="selectStep(2)">
+        <div class="mini-num">STAGE 02</div>
+        <div class="mini-title">Mask Segmentation</div>
+        <div class="mini-speed">YOLO-World + SAM • 0.10s</div>
+      </div>
+      <div class="stage-mini-card" onclick="selectStep(3)">
+        <div class="mini-num">STAGE 03</div>
+        <div class="mini-title">Tableware Re-ID</div>
+        <div class="mini-speed">DINOv2 Cosine • 0.02s</div>
+      </div>
+      <div class="stage-mini-card" onclick="selectStep(4)">
+        <div class="mini-num">STAGE 04</div>
+        <div class="mini-title">Bayesian Calibration</div>
+        <div class="mini-speed">Scalar Log-Normal • 0.002 ms</div>
+      </div>
+      <div class="stage-mini-card" onclick="selectStep(5)">
+        <div class="mini-num">STAGE 05</div>
+        <div class="mini-title">3-Strike CUSUM Shield</div>
+        <div class="mini-speed">Drift Filter • 0.001 ms</div>
+      </div>
+      <div class="stage-mini-card" onclick="selectStep(6)">
+        <div class="mini-num">STAGE 06</div>
+        <div class="mini-title">Food Mass Computation</div>
+        <div class="mini-speed">Bulk Density Voxel • 0.005 ms</div>
+      </div>
+      <div class="stage-mini-card" onclick="selectStep(7)">
+        <div class="mini-num">STAGE 07</div>
+        <div class="mini-title">Zero-Hallucination RAG</div>
+        <div class="mini-speed">USDA & IFCT Tables • 0.045s</div>
+      </div>
+      <div class="stage-mini-card" onclick="selectStep(8)">
+        <div class="mini-num">STAGE 08</div>
+        <div class="mini-title">VoI Attention Allocator</div>
+        <div class="mini-speed">Greedy Knapsack • 0.005 ms</div>
+      </div>
+      <div class="stage-mini-card" onclick="selectStep(9)">
+        <div class="mini-num">STAGE 09</div>
+        <div class="mini-title">Split Conformal Bands</div>
+        <div class="mini-speed">90% Coverage Bounds • 0.010 ms</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const stageData = {
+      1: {
+        time: "T + 0.02s (Scale Extraction)",
+        runtime: "Runtime: ~20 ms",
+        visualTitle: "Visual Focus: Camera Pinhole Focal Ray",
+        model: "Depth Anything v2 + EXIF",
+        stageNumber: "Stage 1 of 9",
+        algo: "Pinhole Ray Back-Projection",
+        title: "Optical Scale & Camera Intrinsics",
+        desc: "The client extracts camera focal length (fx, fy) directly from image EXIF metadata. Depth Anything v2 computes a relative monocular depth map, projecting pixels into physical millimeter space.",
+        formula: "Scale Factor S = Z_metric / f_pixels = SensorDistance / FocalLength\nRay_3D(u, v) = [(u - cx)·Z / fx, (v - cy)·Z / fy, Z]",
+        human: "Without scale, an AI doesn't know if your plate is a tiny tea saucer or a giant buffet platter. Reading camera focal length turns flat 2D pixels into real metric centimeters.",
+        highlightTarget: "outer-rim",
+        highlightColor: "#38BDF8"
+      },
+      2: {
+        time: "T + 0.12s (Segmentation)",
+        runtime: "Runtime: ~100 ms",
+        visualTitle: "Visual Focus: Food & Vessel Boundary Masks",
+        model: "YOLO-World + MobileSAM",
+        stageNumber: "Stage 2 of 9",
+        algo: "Watershed Contour Clustering",
+        title: "Semantic Food & Dish Segmentation",
+        desc: "Zero-shot visual detection isolates the plate perimeter and separates individual food portions (rice mound, dal katori, paneer curry, and chutney) into independent polygon masks.",
+        formula: "IoU(Mask_A, Mask_B) = |Mask_A ∩ Mask_B| / |Mask_A ∪ Mask_B| > 0.70\nConvexHull(Food_i) ⊂ TablewareBoundary_j",
+        human: "Cuts the messy meal into clean virtual boundaries. Instead of guessing the whole plate at once, it isolates each food item so it can be weighed and measured individually.",
+        highlightTarget: "bowl-dal",
+        highlightColor: "#F59E0B"
+      },
+      3: {
+        time: "T + 0.14s (Tableware Matching)",
+        runtime: "Runtime: ~20 ms",
+        visualTitle: "Visual Focus: Personal Tableware Re-Identification",
+        model: "DINOv2-small Embeddings",
+        stageNumber: "Stage 3 of 9",
+        algo: "Nearest-Neighbor Cosine Re-ID",
+        title: "Tableware Re-Identification (Matching Vessel)",
+        desc: "Extracts a 384-dimensional visual embedding of the plate rim and texture, matching it against your saved tableware profile stored in Redis.",
+        formula: "cos(θ) = (u_detected · v_saved) / (||u|| ||v||) ≥ 0.88\nMatch: Profile ID #Tableware_User_42 ('Ceramic Katori 250ml')",
+        human: "The system recognizes your specific dish: 'This is Harshavardhan's ceramic katori #2 that he eats dal from every afternoon.' Your plate becomes your personal scale.",
+        highlightTarget: "inner-rim",
+        highlightColor: "#10B981"
+      },
+      4: {
+        time: "T + 0.142s (Bayesian Update)",
+        runtime: "Runtime: 0.002 ms (188 cycles)",
+        visualTitle: "Visual Focus: Tableware Bayesian Calibration",
+        model: "Log-Normal Conjugate Model",
+        stageNumber: "Stage 4 of 9",
+        algo: "Conjugate Update with Variance Shield",
+        title: "Bayesian Tableware Volume Calibration",
+        desc: "Runs pure scalar arithmetic on CPU registers. Your plate's known volume serves as the prior distribution, and today's optical measurement updates the posterior, shielded by discretization noise 1/(12n²).",
+        formula: "σ_obs² = σ_optical² + 1/(12n²)\nμ_post = σ_post² · [ μ_prior/σ_prior² + ln(V_obs)/σ_obs² ]\n1/σ_post² = 1/σ_prior² + 1/σ_obs²",
+        human: "A single photo has visual noise. But because you eat from the same bowl over 10 days, the mathematical errors cancel out to zero, giving lab-grade volume accuracy effortlessly.",
+        highlightTarget: "highlight-ring",
+        highlightColor: "#38BDF8"
+      },
+      5: {
+        time: "T + 0.143s (Anomaly Check)",
+        runtime: "Runtime: 0.001 ms",
+        visualTitle: "Visual Focus: 3-Strike Anomaly Filter",
+        model: "Sequential Process Control",
+        stageNumber: "Stage 5 of 9",
+        algo: "Two-Sided CUSUM Drift Detection",
+        title: "Anomaly Shield (3-Strike CUSUM Filter)",
+        desc: "Tracks cumulative drift. If you overfill your bowl today, it registers as a temporary 1-strike variance. If you buy a brand-new bowl, a 3-strike drift triggers a new plate profile registration.",
+        formula: "z_t = |ln(V_obs) - μ_prior| / σ_prior\nS_t = max(0, S_{t-1} + z_t - k)\nTrigger New Plate IF: S_t > h for N ≥ 3 consecutive meals",
+        human: "Prevents false alarms. If you eat a huge portion at lunch today, it won't ruin your bowl's calibration. It takes 3 consecutive shifts to prove you actually changed dishes.",
+        highlightTarget: "bowl-curry",
+        highlightColor: "#EF4444"
+      },
+      6: {
+        time: "T + 0.15s (Mass Computation)",
+        runtime: "Runtime: ~5 ms",
+        visualTitle: "Visual Focus: Voxel Density Integration",
+        model: "Physical Bulk Density Database",
+        stageNumber: "Stage 6 of 9",
+        algo: "Voxel Volume-Density Integration",
+        title: "Food Mass Computation",
+        desc: "Multiplies calibrated voxel volume by culinary bulk density values: cooked rice (0.85 g/cm³), lentil dal (1.02 g/cm³), paneer curry (1.08 g/cm³).",
+        formula: "Mass_i = Volume_i × BulkDensity_i\nMass_Rice = 258 cm³ × 0.85 g/cm³ = 219.3 g\nMass_Dal = 157 cm³ × 1.02 g/cm³ = 160.1 g",
+        human: "A cup of fluffy popcorn weighs 15 grams; a cup of dal weighs 240 grams. The backend uses physical culinary densities to convert 3D volume into real grams.",
+        highlightTarget: "mound-rice",
+        highlightColor: "#F1F5F9"
+      },
+      7: {
+        time: "T + 0.20s (Nutrient Lookup)",
+        runtime: "Runtime: ~45 ms",
+        visualTitle: "Visual Focus: Zero-Hallucination USDA/IFCT RAG",
+        model: "BGE-Small-en-v1.5 + pgvector",
+        stageNumber: "Stage 7 of 9",
+        algo: "Vector Cosine Composition Retrieval",
+        title: "Zero-Hallucination Nutrient Grounding",
+        desc: "Food segment names query official laboratory chemical composition tables (USDA FoodData Central + ICMR-NIN Indian Food Composition Tables). The LLM is prohibited from guessing calories.",
+        formula: "Calories_i = Mass_i × (kcal_100g / 100)\nProtein_i = Mass_i × (Protein_100g / 100)\nTotal_Energy = ∑ Calories_i = 165 + 240 + 286 = 691 kcal",
+        human: "Zero AI hallucination. The system never asks ChatGPT 'how many calories is in this?' It strictly looks up official laboratory chemical tables.",
+        highlightTarget: "bowl-dal",
+        highlightColor: "#10B981"
+      },
+      8: {
+        time: "T + 0.205s (Active Query Decision)",
+        runtime: "Runtime: 0.005 ms",
+        visualTitle: "Visual Focus: Value of Information (VoI) Allocator",
+        model: "Knapsack Attention Policy",
+        stageNumber: "Stage 8 of 9",
+        algo: "Greedy Fractional Knapsack VoI",
+        title: "Smart Attention & Query Allocator",
+        desc: "Computes the variance reduction per unit of user effort. It asks about oil in the paneer curry (+140 kcal variance), but completely suppresses questions about low-calorie chutney (+8 kcal variance).",
+        formula: "VoI(i) = [ (∂kcal/∂param_i)² · σ_i² ] / CognitiveCost\nAsk Question IF: VoI(i) > Threshold AND DailyBudget B_d > 0\nResult: Ask 0 questions (Auto-Logged)",
+        human: "Respects user patience. It will never annoy you by asking about pickles or chutney. Questions drop from 3/day in Week 1 to zero in Week 2, achieving 1-tap logging.",
+        highlightTarget: "condiment-chutney",
+        highlightColor: "#10B981"
+      },
+      9: {
+        time: "T + 0.21s (Final Guarantee)",
+        runtime: "Runtime: 0.010 ms",
+        visualTitle: "Visual Focus: 90% Conformal Coverage Intervals",
+        model: "Split Conformal Calibrator (n=500)",
+        stageNumber: "Stage 9 of 9",
+        algo: "Non-Conformity Quantile Residuals",
+        title: "Finite-Sample Uncertainty Quantification",
+        desc: "Computes distribution-free prediction bands. Instead of a deceptive point estimate ('exactly 691.0 kcal'), it outputs a mathematically guaranteed 90% confidence interval.",
+        formula: "q_hat = Quantile(0.90; {|y_i - y_hat_i|}) = ±35 kcal\nCalibrated Prediction Band: C(X) = [656 kcal — 726 kcal]\nGuaranteed Coverage: P(Y ∈ C(X)) ≥ 90%",
+        human: "Honest science. Real metabolism varies. Stating an exact decimal calorie is dishonest; providing a guaranteed 90% boundary gives doctors and users genuine trust.",
+        highlightTarget: "highlight-ring",
+        highlightColor: "#10B981"
+      }
+    };
+
+    function selectStep(step) {
+      const data = stageData[step];
+      
+      // Update Nav Buttons
+      document.querySelectorAll('.step-btn').forEach((btn, idx) => {
+        if (idx + 1 === step) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      // Update Header Timer
+      document.getElementById('time-display').innerText = data.time;
+      document.getElementById('stage-runtime').innerText = data.runtime;
+
+      // Update Panel Texts
+      document.getElementById('visual-title').innerText = data.visualTitle;
+      document.getElementById('visual-model').innerText = data.model;
+      document.getElementById('stage-number').innerText = data.stageNumber;
+      document.getElementById('stage-algo').innerText = data.algo;
+      document.getElementById('stage-title-text').innerText = data.title;
+      document.getElementById('stage-desc-text').innerText = data.desc;
+      document.getElementById('math-formula').innerHTML = data.formula.replace(/\n/g, '<br>');
+      document.getElementById('human-desc').innerText = data.human;
+
+      // SVG Highlight Animation
+      const ring = document.getElementById('highlight-ring');
+      ring.setAttribute('stroke', data.highlightColor);
+      ring.style.opacity = '0.2';
+      setTimeout(() => {
+        ring.style.opacity = '0.9';
+      }, 100);
+    }
+  </script>
+
+</body>
+</html>

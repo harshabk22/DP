@@ -1,0 +1,6 @@
+Policy,Questions_Per_Meal,Kcal_MAE,Kcal_MAE_SD,Pct_Oracle_Accuracy
+none,0.0,194.5,150.16,0.0
+random,0.255,75.92,26.73,95.5
+static_threshold,0.702,69.78,22.51,100.0
+oracle_always,0.85,70.28,23.43,100.0
+messmate_voi,0.761,69.84,23.06,100.0

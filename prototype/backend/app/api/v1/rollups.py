@@ -1,0 +1,207 @@
+"""Daily rollups and weekly summary digest endpoints."""
+
+from datetime import date, datetime, timezone
+import math
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
+
+from app.api.deps import get_current_user, get_db
+from app.core.safety import DISCLAIMER_TEXT, get_user_daily_targets
+from app.models.meal import Meal
+from app.models.question import DailyBudget
+from app.models.user import Profile, User
+from app.schemas.meal import (
+    BudgetDetail,
+    MealDetailResponse,
+    MealItemDetail,
+    MealTotalDetail,
+    QuestionEmbedded,
+    QuestionOptionDetail,
+)
+from app.schemas.rollup import DayRollupResponse, WeekSummaryResponse
+from app.services.conformal.engine import ConformalCalibrationService
+from app.services.digest.engine import WeeklyDigestEngine
+
+router = APIRouter(tags=["rollups"])
+
+
+@router.get(
+    "/days/{day_str}",
+    response_model=DayRollupResponse,
+    summary="Get daily nutrition rollup and question budget state",
+)
+def get_day_rollup(
+    day_str: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> DayRollupResponse:
+    """Retrieve aggregate nutrition totals and remaining question budget for a date."""
+    try:
+        if day_str.lower() == "today":
+            target_date = datetime.now(timezone.utc).date()
+        else:
+            target_date = date.fromisoformat(day_str)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid date format. Expected YYYY-MM-DD.",
+        )
+
+    meals = (
+        db.query(Meal)
+        .filter(
+            Meal.user_id == current_user.id,
+            Meal.local_date == target_date,
+            Meal.status == "analyzed",
+        )
+        .all()
+    )
+
+    total_kcal = 0.0
+    total_kcal_var = 0.0
+    total_protein = 0.0
+    total_fat = 0.0
+    total_carb = 0.0
+    total_fibre = 0.0
+
+    meal_responses: list[MealDetailResponse] = []
+
+    for meal in meals:
+        total_kcal += float(meal.kcal_mean or 0.0)
+        total_kcal_var += float(meal.kcal_sd or 0.0) ** 2
+
+        p_m = 0.0
+        f_m = 0.0
+        c_m = 0.0
+        fib_m = 0.0
+
+        items_detail = []
+        for item in meal.items:
+            if item.food and item.grams_mean:
+                ratio = float(item.grams_mean) / 100.0
+                p_m += float(item.food.protein_g or 0.0) * ratio
+                f_m += float(item.food.fat_g or 0.0) * ratio
+                c_m += float(item.food.carb_g or 0.0) * ratio
+                fib_m += float(item.food.fibre_g or 0.0) * ratio
+
+            items_detail.append(
+                MealItemDetail(
+                    id=item.id,
+                    dish_label=item.dish_label_raw,
+                    food_id=item.food_id,
+                    resolution_tier=item.resolution_tier,
+                    unit=item.unit,
+                    unit_count=item.unit_count,
+                    grams_mean=item.grams_mean,
+                    grams_sd=item.grams_sd,
+                    kcal_mean=item.kcal_mean,
+                    kcal_sd=item.kcal_sd,
+                    portion_source=item.portion_source,
+                    ask_value=item.ask_value,
+                )
+            )
+
+        total_protein += p_m
+        total_fat += f_m
+        total_carb += c_m
+        total_fibre += fib_m
+
+        tot = MealTotalDetail(
+            kcal_mean=round(float(meal.kcal_mean or 0.0), 1),
+            kcal_sd=round(float(meal.kcal_sd or 0.0), 1),
+            kcal_p10=round(float(meal.kcal_p10 or 0.0), 1),
+            kcal_p90=round(float(meal.kcal_p90 or 0.0), 1),
+            protein_g=round(p_m, 1),
+            fat_g=round(f_m, 1),
+            carb_g=round(c_m, 1),
+            fibre_g=round(fib_m, 1),
+        )
+
+        meal_responses.append(
+            MealDetailResponse(
+                meal_id=meal.id,
+                status=meal.status,
+                captured_at=meal.captured_at,
+                context=meal.context,
+                total=tot,
+                items=items_detail,
+                question=None,
+                budget=BudgetDetail(total=3, used=0, remaining=3),
+            )
+        )
+
+    # Quantiles do not add linearly across meals: accumulate variance and conformally calibrate daily bounds
+    total_sd = math.sqrt(total_kcal_var)
+    conf_bounds = ConformalCalibrationService.calibrate_meal_bounds(
+        kcal_mean=total_kcal,
+        kcal_sd=total_sd,
+    )
+    total_p10 = conf_bounds.kcal_p10
+    total_p90 = conf_bounds.kcal_p90
+
+    # Budget query
+    budget_row = (
+        db.query(DailyBudget)
+        .filter(DailyBudget.user_id == current_user.id, DailyBudget.local_date == target_date)
+        .first()
+    )
+    b_tot = budget_row.budget_total if budget_row else 3
+    b_used = budget_row.budget_used if budget_row else 0
+    budget_detail = BudgetDetail(
+        total=b_tot,
+        used=b_used,
+        remaining=max(0, b_tot - b_used),
+    )
+
+    # Goal target comparison (Invariant I8: strictly non-shaming)
+    profile = (
+        getattr(current_user, "profile", None)
+        or db.query(Profile).filter(Profile.user_id == current_user.id).first()
+    )
+    target_kcal, target_protein, target_carb, target_fat = get_user_daily_targets(profile)
+    remaining_kcal = max(0.0, round(target_kcal - total_kcal, 1))
+
+    # 19:00 Proactive dinner gap recommendation engine (p01.md §2.C, §7.1)
+    digest_engine = WeeklyDigestEngine(db)
+    dinner_advice, dinner_swaps = digest_engine.generate_dinner_recommendation(
+        current_user.id, target_date
+    )
+
+    return DayRollupResponse(
+        date=target_date,
+        meal_count=len(meals),
+        meals=meal_responses,
+        total_kcal_mean=round(total_kcal, 1),
+        total_kcal_sd=round(total_sd, 1),
+        total_kcal_p10=round(total_p10, 1),
+        total_kcal_p90=round(total_p90, 1),
+        total_protein_g=round(total_protein, 1),
+        total_fat_g=round(total_fat, 1),
+        total_carb_g=round(total_carb, 1),
+        total_fibre_g=round(total_fibre, 1),
+        target_kcal=target_kcal,
+        target_protein_g=target_protein,
+        target_carb_g=target_carb,
+        target_fat_g=target_fat,
+        remaining_budget_kcal=remaining_kcal,
+        budget=budget_detail,
+        dinner_advice=dinner_advice,
+        dinner_swaps=dinner_swaps,
+        disclaimer=DISCLAIMER_TEXT,
+    )
+
+
+@router.get(
+    "/weeks/{iso_week}",
+    response_model=WeekSummaryResponse,
+    summary="Get weekly nutrition digest and high-density food swaps (SPEC §10)",
+)
+def get_week_summary(
+    iso_week: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> WeekSummaryResponse:
+    """Generate weekly summary and ICMR-NIN recommendations adhering to Invariant I8."""
+    engine = WeeklyDigestEngine(db)
+    return engine.generate_weekly_digest(current_user.id, iso_week)

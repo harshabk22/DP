@@ -1,0 +1,40 @@
+{
+  "figure": "Figure 1: Pareto Frontier",
+  "data": [
+    {
+      "policy": "none",
+      "questions_per_meal": 0.0,
+      "kcal_mae": 194.5,
+      "kcal_mae_sd": 150.16,
+      "pct_oracle_accuracy": 0.0
+    },
+    {
+      "policy": "random",
+      "questions_per_meal": 0.255,
+      "kcal_mae": 75.92,
+      "kcal_mae_sd": 26.73,
+      "pct_oracle_accuracy": 95.5
+    },
+    {
+      "policy": "static_threshold",
+      "questions_per_meal": 0.702,
+      "kcal_mae": 69.78,
+      "kcal_mae_sd": 22.51,
+      "pct_oracle_accuracy": 100.0
+    },
+    {
+      "policy": "oracle_always",
+      "questions_per_meal": 0.85,
+      "kcal_mae": 70.28,
+      "kcal_mae_sd": 23.43,
+      "pct_oracle_accuracy": 100.0
+    },
+    {
+      "policy": "messmate_voi",
+      "questions_per_meal": 0.761,
+      "kcal_mae": 69.84,
+      "kcal_mae_sd": 23.06,
+      "pct_oracle_accuracy": 100.0
+    }
+  ]
+}

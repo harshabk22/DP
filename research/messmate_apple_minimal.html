@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MessMate — Designed with Apple Precision</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --card-bg: rgba(255, 255, 255, 0.04);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-border-active: rgba(56, 189, 248, 0.4);
+      --accent-cyan: #38BDF8;
+      --accent-green: #34D399;
+      --accent-amber: #F59E0B;
+      --accent-purple: #A78BFA;
+      --accent-rose: #FB7185;
+      --text-primary: #FFFFFF;
+      --text-secondary: #8E8E93;
+      --text-tertiary: #48484A;
+      --spring-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background-color: var(--bg);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.45;
+      padding: 40px 24px 80px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    /* Apple-style Navigation Bar */
+    .apple-nav {
+      position: sticky;
+      top: 20px;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 18px;
+      background: rgba(18, 18, 20, 0.75);
+      backdrop-filter: blur(25px) saturate(190%);
+      -webkit-backdrop-filter: blur(25px) saturate(190%);
+      border: 0.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+      margin-bottom: 50px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: #FFF;
+    }
+
+    .nav-pill {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 10px var(--accent-green);
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 0.5px solid rgba(255, 255, 255, 0.1);
+      color: #FFF;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.25s var(--spring-ease);
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .nav-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+      margin-bottom: 12px;
+    }
+
+    .hero h1 {
+      font-size: clamp(34px, 5vw, 56px);
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      line-height: 1.08;
+      margin-bottom: 18px;
+      background: linear-gradient(180deg, #FFFFFF 40%, #A1A1A6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: clamp(16px, 2vw, 20px);
+      color: var(--text-secondary);
+      max-width: 620px;
+      margin: 0 auto 30px;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+    }
+
+    .sim-trigger-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border-radius: 9999px;
+      background: #FFFFFF;
+      color: #000000;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      transition: all 0.3s var(--spring-ease);
+      box-shadow: 0 8px 24px rgba(255, 255, 255, 0.2);
+    }
+
+    .sim-trigger-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(255, 255, 255, 0.3);
+    }
+
+    .sim-trigger-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* 4-Beat Apple Pipeline Cards */
+    .pipeline-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 18px;
+      margin-bottom: 60px;
+    }
+
+    .apple-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(40px) saturate(180%);
+      -webkit-backdrop-filter: blur(40px) saturate(180%);
+      border: 0.5px solid var(--card-border);
+      border-radius: 24px;
+      padding: 26px 22px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.4s var(--spring-ease);
+      min-height: 290px;
+    }
+
+    .apple-card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-4px);
+    }
+
+    .apple-card.active-flow {
+      border-color: var(--card-border-active);
+      box-shadow: 0 0 40px rgba(56, 189, 248, 0.2);
+    }
+
+    .card-top {
+      margin-bottom: 20px;
+    }
+
+    .card-num {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .card-icon-wrap {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 16px;
+      border: 0.5px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .card-title {
+      font-size: 19px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #FFF;
+      margin-bottom: 6px;
+    }
+
+    .card-subtitle {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .card-bottom {
+      border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+      padding-top: 14px;
+      margin-top: 16px;
+    }
+
+    .tech-pill {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.1);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 0.5px solid rgba(56, 189, 248, 0.2);
+    }
+
+    /* Real-World Visual Storyboard */
+    .story-section {
+      background: rgba(255, 255, 255, 0.02);
+      border: 0.5px solid var(--card-border);
+      border-radius: 32px;
+      padding: 36px 32px;
+      margin-bottom: 60px;
+      backdrop-filter: blur(30px);
+    }
+
+    .section-headline {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .section-sub {
+      font-size: 15px;
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 580px;
+      margin: 0 auto 32px;
+    }
+
+    .visual-comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .comp-card {
+      background: rgba(0, 0, 0, 0.4);
+      border: 0.5px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      padding: 24px;
+    }
+
+    .comp-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #FFF;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .comp-card p {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+
+    /* Live Interactive Phone Frame */
+    .interactive-container {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 32px;
+      align-items: center;
+      margin-bottom: 60px;
+    }
+
+    @media (max-width: 820px) {
+      .interactive-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .phone-housing {
+      width: 100%;
+      height: 520px;
+      background: #000;
+      border: 4px solid #2C2C2E;
+      border-radius: 44px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+      position: relative;
+      overflow: hidden;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .dynamic-island {
+      width: 90px;
+      height: 22px;
+      background: #000;
+      border-radius: 20px;
+      margin: 0 auto 16px;
+      border: 0.5px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .phone-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .phone-lens-card {
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      height: 210px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      position: relative;
+    }
+
+    .phone-lens-card.pulsing {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.3) inset;
+    }
+
+    .phone-plate-art {
+      width: 110px;
+      height: 80px;
+    }
+
+    .interactive-shade {
+      background: rgba(28, 28, 30, 0.95);
+      border: 0.5px solid rgba(255, 255, 255, 0.15);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.4s var(--spring-ease);
+    }
+
+    .interactive-shade.visible {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .shade-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--accent-amber);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .shade-prompt {
+      font-size: 13px;
+      font-weight: 500;
+      color: #FFF;
+      margin-bottom: 8px;
+    }
+
+    .shade-chips {
+      display: flex;
+      gap: 6px;
+    }
+
+    .chip-action {
+      flex: 1;
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 0.5px solid rgba(255, 255, 255, 0.12);
+      color: #FFF;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s var(--spring-ease);
+    }
+
+    .chip-action:active {
+      transform: scale(0.95);
+      background: var(--accent-cyan);
+      color: #000;
+    }
+
+    /* Stack Pill Matrix */
+    .stack-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+
+    .pill-item {
+      padding: 8px 14px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 0.5px solid rgba(255, 255, 255, 0.1);
+      font-size: 12.5px;
+      color: #D1D1D6;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pill-item strong {
+      color: #FFF;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 0.5px solid var(--card-border);
+      padding-top: 30px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Apple Minimal Navigation Bar -->
+  <nav class="apple-nav">
+    <div class="nav-brand">
+      <div class="nav-pill"></div>
+      <span>MessMate</span>
+      <span style="color: var(--text-tertiary);">•</span>
+      <span style="color: var(--text-secondary); font-weight: 400;">Quiet Precision</span>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-btn" onclick="scrollToSection('pipeline')">Pipeline</button>
+      <button class="nav-btn" onclick="scrollToSection('interactive')">Test Drive</button>
+      <button class="nav-btn" onclick="scrollToSection('stack')">Stack Matrix</button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <span class="eyebrow">Simplicity in Motion</span>
+    <h1>How MessMate Works.<br>Spoon-Fed.</h1>
+    <p>
+      No manual weighing. No guessing games. A single camera snap, three silent parallel engines, and one polite tap after dinner.
+    </p>
+    <button class="sim-trigger-btn" onclick="runAppleSimulation()">
+      <span>▶</span> Tap to Simulate Live Meal
+    </button>
+  </header>
+
+  <!-- 4-Beat Radical Simplicity Cards -->
+  <div class="pipeline-grid" id="pipeline">
+
+    <!-- Beat 1: The Snap -->
+    <div class="apple-card" id="card-1">
+      <div class="card-top">
+        <div class="card-num">Beat 01 • Client</div>
+        <div class="card-icon-wrap" style="color: var(--accent-cyan);">📸</div>
+        <div class="card-title">1-Second Snap</div>
+        <div class="card-subtitle">
+          Android camera snaps your meal in under 1.2s. Extracts optical focal length (CIPA EXIF) and downsamples to 800x800 WebP without cellular lag.
+        </div>
+      </div>
+      <div class="card-bottom">
+        <span class="tech-pill">Kotlin • Android SDK 36 • FileProvider</span>
+      </div>
+    </div>
+
+    <!-- Beat 2: Three Parallel Streams -->
+    <div class="apple-card" id="card-2">
+      <div class="card-top">
+        <div class="card-num">Beat 02 • Concurrent DAG</div>
+        <div class="card-icon-wrap" style="color: var(--accent-green);">⚡</div>
+        <div class="card-title">3 Silent Streams</div>
+        <div class="card-subtitle">
+          Python <code>asyncio.gather</code> executes in &lt;442ms: DINOv2 fingerprints your personal kitchen bowl, Gemini Flash-Lite labels dishes, and Redis fetches daily budget.
+        </div>
+      </div>
+      <div class="card-bottom">
+        <span class="tech-pill">FastAPI • DINOv2 • Gemini 2.5 Flash-Lite</span>
+      </div>
+    </div>
+
+    <!-- Beat 3: The Chemistry Ledger -->
+    <div class="apple-card" id="card-3">
+      <div class="card-top">
+        <div class="card-num">Beat 03 • Chemistry</div>
+        <div class="card-icon-wrap" style="color: var(--accent-purple);">🧪</div>
+        <div class="card-title">Zero Guesswork</div>
+        <div class="card-subtitle">
+          VLM never hallucinates calories (Invariant I1). Nutrition is resolved directly from verified laboratory databases (USDA FNDDS + IFCT) using 384-d semantic vectors.
+        </div>
+      </div>
+      <div class="card-bottom">
+        <span class="tech-pill">FastEmbed • SciPy • Conformal [p10, p90]</span>
+      </div>
+    </div>
+
+    <!-- Beat 4: Ambient Polite Waiter -->
+    <div class="apple-card" id="card-4">
+      <div class="card-top">
+        <div class="card-num">Beat 04 • Reverse Friction</div>
+        <div class="card-icon-wrap" style="color: var(--accent-amber);">🔔</div>
+        <div class="card-title">T+20m Ambient Tap</div>
+        <div class="card-subtitle">
+          Never interrupts at the table. 20 minutes after eating, Android shade asks one discrete question: <em>"How many rotis?"</em>. One tap calibrates your bowl forever.
+        </div>
+      </div>
+      <div class="card-bottom">
+        <span class="tech-pill">VoI Allocator • Bayesian Prior θ_u</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Real-World Contrast Storyboard -->
+  <section class="story-section">
+    <div class="section-headline">The 3 Approaches to Nutrition</div>
+    <div class="section-sub">Why MessMate is the only tracker designed for how real humans eat.</div>
+
+    <div class="visual-comparison-grid">
+      <div class="comp-card" style="border-left: 3px solid var(--accent-rose);">
+        <div class="comp-title">
+          <span style="color: var(--accent-rose);">✕</span> MyFitnessPal Interrogates
+        </div>
+        <p>
+          Asks you 20 questions during cooking. Forces you to weigh carrots on a gram scale. Search results show 50 conflicting entries for "rice". <strong>80% of users quit within 30 days.</strong>
+        </p>
+      </div>
+
+      <div class="comp-card" style="border-left: 3px solid var(--accent-amber);">
+        <div class="comp-title">
+          <span style="color: var(--accent-amber);">⚠</span> Cal AI Magically Guesses
+        </div>
+        <p>
+          Claims a single 2D camera photo can measure exact calories. A 2D photo physically cannot see bowl depth, food density, or invisible cooking oils (9 kcal/g). Pure mathematical fiction.
+        </p>
+      </div>
+
+      <div class="comp-card" style="border-left: 3px solid var(--accent-green);">
+        <div class="comp-title">
+          <span style="color: var(--accent-green);">✓</span> MessMate Learns Your Tableware
+        </div>
+        <p>
+          You eat 80% of meals from the <strong>same 4 bowls at home</strong>. MessMate recognizes your bowl once with DINOv2. By Day 14, logging takes 1 single tap.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Test Drive Container -->
+  <section class="story-section" id="interactive">
+    <div class="section-headline">Test Drive the Ambient Experience</div>
+    <div class="section-sub">Watch how the camera snap triggers the background DAG and schedules the delayed notification.</div>
+
+    <div class="interactive-container">
+
+      <!-- Simulated Phone Housing -->
+      <div class="phone-housing">
+        <div class="dynamic-island"></div>
+        <div class="phone-view">
+
+          <!-- Camera Screen -->
+          <div class="phone-lens-card" id="lens-display">
+            <svg class="phone-plate-art" viewBox="0 0 100 70">
+              <ellipse cx="50" cy="35" rx="42" ry="26" fill="#1C1C1E" stroke="#38BDF8" stroke-width="1.5" stroke-dasharray="3,3"/>
+              <circle cx="38" cy="32" r="11" fill="#F59E0B" opacity="0.85"/>
+              <circle cx="62" cy="34" r="10" fill="#34D399" opacity="0.85"/>
+              <ellipse cx="50" cy="45" rx="14" ry="7" fill="#E2E8F0" opacity="0.6"/>
+            </svg>
+            <div id="lens-status" style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;">
+              Ready to Capture
+            </div>
+          </div>
+
+          <!-- Bottom Ambient Notification Shade -->
+          <div class="interactive-shade" id="shade-popup">
+            <div class="shade-header">
+              <span>🔔 MESSMATE DINING CHECK</span>
+              <span>+20m</span>
+            </div>
+            <div class="shade-prompt">How many rotis did you have?</div>
+            <div class="shade-chips">
+              <div class="chip-action" onclick="confirmChip(1)">1</div>
+              <div class="chip-action" onclick="confirmChip(2)">2</div>
+              <div class="chip-action" onclick="confirmChip(3)">3</div>
+              <div class="chip-action" onclick="confirmChip(4)">4+</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Live Pipeline Telemetry -->
+      <div>
+        <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">Live Execution Telemetry</h3>
+        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">
+          When you click Simulate, the backend executes the 3 branches concurrently.
+        </p>
+
+        <div style="background: rgba(0,0,0,0.5); border: 0.5px solid var(--card-border); border-radius: 16px; padding: 20px; font-family: -apple-system, monospace; font-size: 13px;">
+          <div id="log-1" style="color: var(--text-tertiary); margin-bottom: 8px;">• Step 1: Camera sensor EXIF &amp; 800x800 WebP upload</div>
+          <div id="log-2" style="color: var(--text-tertiary); margin-bottom: 8px;">• Step 2: DINOv2 Re-ID + Gemini 2.5 Flash-Lite DAG</div>
+          <div id="log-3" style="color: var(--text-tertiary); margin-bottom: 8px;">• Step 3: 3-Tier Lab Resolution (USDA + IFCT)</div>
+          <div id="log-4" style="color: var(--text-tertiary); margin-bottom: 12px;">• Step 4: Value-of-Information (VoI) Notification</div>
+          <div id="log-result" style="color: var(--accent-green); font-weight: 600;">System Idle. Tap simulate above to begin.</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Complete Technology Stack Matrix -->
+  <section class="story-section" id="stack">
+    <div class="section-headline">Verified Technology Stack Matrix</div>
+    <div class="section-sub">Every language, framework, library, and ML model in the repository at a glance.</div>
+
+    <div class="stack-pills">
+      <div class="pill-item">🐍 <strong>Python 3.11+</strong> (FastAPI Backend)</div>
+      <div class="pill-item">📱 <strong>Kotlin 17</strong> (Android Native Shell)</div>
+      <div class="pill-item">🦋 <strong>Dart / Flutter 3.x</strong> (Cross-Platform)</div>
+      <div class="pill-item">⚡ <strong>Uvicorn</strong> (High-Concurrency ASGI)</div>
+      <div class="pill-item">👁 <strong>DINOv2</strong> (Tableware Re-ID 384-d)</div>
+      <div class="pill-item">🤖 <strong>Gemini 2.5 Flash-Lite</strong> (Dish Perception)</div>
+      <div class="pill-item">🔍 <strong>FastEmbed</strong> (HNSW Vector Search)</div>
+      <div class="pill-item">🗄 <strong>PostgreSQL + pgvector</strong> (Production DB)</div>
+      <div class="pill-item">⚡ <strong>Redis</strong> (VoI Budget Cache)</div>
+      <div class="pill-item">📐 <strong>SciPy &amp; NumPy</strong> (Conformal Prediction)</div>
+      <div class="pill-item">🔒 <strong>Argon2-cffi &amp; PyJWT</strong> (Security)</div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>MessMate Dietary Intelligence • Designed with Apple Precision &amp; Quiet Restraint</p>
+    <p style="margin-top: 4px; font-size: 11.5px;">Engineered to eliminate cognitive fatigue and respect physical dining reality.</p>
+  </footer>
+
+</div>
+
+<script>
+  function scrollToSection(id) {
+    document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function runAppleSimulation() {
+    const cards = [
+      document.getElementById('card-1'),
+      document.getElementById('card-2'),
+      document.getElementById('card-3'),
+      document.getElementById('card-4')
+    ];
+    const lens = document.getElementById('lens-display');
+    const lensStatus = document.getElementById('lens-status');
+    const shade = document.getElementById('shade-popup');
+    const log1 = document.getElementById('log-1');
+    const log2 = document.getElementById('log-2');
+    const log3 = document.getElementById('log-3');
+    const log4 = document.getElementById('log-4');
+    const logResult = document.getElementById('log-result');
+
+    // Reset
+    cards.forEach(c => c.classList.remove('active-flow'));
+    shade.classList.remove('visible');
+    lens.classList.remove('pulsing');
+
+    // Beat 1
+    cards[0].classList.add('active-flow');
+    lens.classList.add('pulsing');
+    lensStatus.innerText = "Snapping Plate (82 KB)...";
+    log1.style.color = "#38BDF8";
+    logResult.innerText = "Executing Beat 1: Android Camera Capture";
+    await sleep(400);
+
+    // Beat 2
+    cards[0].classList.remove('active-flow');
+    cards[1].classList.add('active-flow');
+    lensStatus.innerText = "DINOv2 Re-ID + Flash-Lite...";
+    log2.style.color = "#34D399";
+    logResult.innerText = "Executing Beat 2: Concurrent DAG (<442ms)";
+    await sleep(450);
+
+    // Beat 3
+    cards[1].classList.remove('active-flow');
+    cards[2].classList.add('active-flow');
+    lensStatus.innerText = "Resolving IFCT & USDA...";
+    log3.style.color = "#A78BFA";
+    logResult.innerText = "Executing Beat 3: Lab Nutrition Resolution";
+    await sleep(400);
+
+    // Beat 4
+    cards[2].classList.remove('active-flow');
+    cards[3].classList.add('active-flow');
+    lensStatus.innerText = "Meal Logged: 612 ± 88 kcal";
+    log4.style.color = "#F59E0B";
+    logResult.innerText = "T+20m Alert Scheduled on Android Shade";
+    await sleep(350);
+
+    // Pop shade
+    shade.classList.add('visible');
+    logResult.innerText = "Complete: Personal Tableware Prior θ_u Ready for Calibration";
+  }
+
+  function confirmChip(count) {
+    const shade = document.getElementById('shade-popup');
+    const logResult = document.getElementById('log-result');
+    shade.classList.remove('visible');
+    logResult.innerText = `Confirmed ${count} rotis! Tableware prior updated forever.`;
+  }
+</script>
+
+</body>
+</html>

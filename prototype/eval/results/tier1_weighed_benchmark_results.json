@@ -1,0 +1,314 @@
+{
+  "benchmark_tier": "Tier 1 \u2014 In-Silico Multi-Cuisine Weighed Benchmark (\u00a713.1)",
+  "evaluation_type": "in_silico_monte_carlo_validation",
+  "disclaimer": "NOTICE: This evaluation harness executes in-silico Monte Carlo simulations across parameterized food distributions and synthetic personas. These results validate algorithmic mechanics and mathematical convergence; they do not represent clinical human trial outcomes.",
+  "catalog_source": "ICMR-NIN IFCT 2017 & USDA FNDDS",
+  "catalog_size": 169,
+  "sample_size": 200,
+  "cuisines": [
+    "Western",
+    "Asian",
+    "Indian",
+    "Mediterranean"
+  ],
+  "overall": {
+    "kcal": {
+      "label": "Calories (kcal)",
+      "zero_shot": {
+        "mae": 178.46,
+        "mpe": 20.82,
+        "rmse": 255.58
+      },
+      "messmate": {
+        "mae": 40.23,
+        "mpe": 4.77,
+        "rmse": 57.27
+      },
+      "mae_reduction_pct": 77.5,
+      "paired_t_statistic": 10.62,
+      "p_value": "< 0.0001"
+    },
+    "protein_g": {
+      "label": "Protein (g)",
+      "zero_shot": {
+        "mae": 8.27,
+        "mpe": 19.99,
+        "rmse": 12.73
+      },
+      "messmate": {
+        "mae": 1.99,
+        "mpe": 5.17,
+        "rmse": 2.92
+      },
+      "mae_reduction_pct": 75.9,
+      "paired_t_statistic": 9.41,
+      "p_value": "< 0.0001"
+    },
+    "fat_g": {
+      "label": "Fat (g)",
+      "zero_shot": {
+        "mae": 12.77,
+        "mpe": 31.95,
+        "rmse": 19.85
+      },
+      "messmate": {
+        "mae": 2.28,
+        "mpe": 5.38,
+        "rmse": 3.71
+      },
+      "mae_reduction_pct": 82.1,
+      "paired_t_statistic": 9.99,
+      "p_value": "< 0.0001"
+    },
+    "carb_g": {
+      "label": "Carbohydrates (g)",
+      "zero_shot": {
+        "mae": 18.41,
+        "mpe": 23.29,
+        "rmse": 28.21
+      },
+      "messmate": {
+        "mae": 4.21,
+        "mpe": 4.94,
+        "rmse": 6.01
+      },
+      "mae_reduction_pct": 77.1,
+      "paired_t_statistic": 9.54,
+      "p_value": "< 0.0001"
+    }
+  },
+  "by_cuisine": {
+    "Western": {
+      "kcal": {
+        "label": "Calories (kcal)",
+        "zero_shot": {
+          "mae": 155.02,
+          "mpe": 17.82,
+          "rmse": 221.54
+        },
+        "messmate": {
+          "mae": 49.63,
+          "mpe": 5.09,
+          "rmse": 74.12
+        },
+        "mae_reduction_pct": 68.0
+      },
+      "protein_g": {
+        "label": "Protein (g)",
+        "zero_shot": {
+          "mae": 9.74,
+          "mpe": 18.48,
+          "rmse": 15.67
+        },
+        "messmate": {
+          "mae": 2.26,
+          "mpe": 5.15,
+          "rmse": 3.22
+        },
+        "mae_reduction_pct": 76.8
+      },
+      "fat_g": {
+        "label": "Fat (g)",
+        "zero_shot": {
+          "mae": 14.9,
+          "mpe": 31.84,
+          "rmse": 21.13
+        },
+        "messmate": {
+          "mae": 3.06,
+          "mpe": 5.76,
+          "rmse": 4.75
+        },
+        "mae_reduction_pct": 79.5
+      },
+      "carb_g": {
+        "label": "Carbohydrates (g)",
+        "zero_shot": {
+          "mae": 16.89,
+          "mpe": 30.44,
+          "rmse": 28.61
+        },
+        "messmate": {
+          "mae": 4.36,
+          "mpe": 5.25,
+          "rmse": 6.84
+        },
+        "mae_reduction_pct": 74.2
+      }
+    },
+    "Asian": {
+      "kcal": {
+        "label": "Calories (kcal)",
+        "zero_shot": {
+          "mae": 161.61,
+          "mpe": 21.73,
+          "rmse": 208.41
+        },
+        "messmate": {
+          "mae": 27.8,
+          "mpe": 3.55,
+          "rmse": 37.04
+        },
+        "mae_reduction_pct": 82.8
+      },
+      "protein_g": {
+        "label": "Protein (g)",
+        "zero_shot": {
+          "mae": 8.63,
+          "mpe": 21.61,
+          "rmse": 12.3
+        },
+        "messmate": {
+          "mae": 1.58,
+          "mpe": 4.2,
+          "rmse": 2.06
+        },
+        "mae_reduction_pct": 81.7
+      },
+      "fat_g": {
+        "label": "Fat (g)",
+        "zero_shot": {
+          "mae": 9.16,
+          "mpe": 32.99,
+          "rmse": 12.21
+        },
+        "messmate": {
+          "mae": 1.3,
+          "mpe": 4.52,
+          "rmse": 1.71
+        },
+        "mae_reduction_pct": 85.8
+      },
+      "carb_g": {
+        "label": "Carbohydrates (g)",
+        "zero_shot": {
+          "mae": 23.42,
+          "mpe": 24.23,
+          "rmse": 32.61
+        },
+        "messmate": {
+          "mae": 3.58,
+          "mpe": 3.8,
+          "rmse": 4.7
+        },
+        "mae_reduction_pct": 84.7
+      }
+    },
+    "Indian": {
+      "kcal": {
+        "label": "Calories (kcal)",
+        "zero_shot": {
+          "mae": 212.11,
+          "mpe": 20.25,
+          "rmse": 318.71
+        },
+        "messmate": {
+          "mae": 42.86,
+          "mpe": 4.77,
+          "rmse": 59.19
+        },
+        "mae_reduction_pct": 79.8
+      },
+      "protein_g": {
+        "label": "Protein (g)",
+        "zero_shot": {
+          "mae": 5.48,
+          "mpe": 17.77,
+          "rmse": 7.66
+        },
+        "messmate": {
+          "mae": 1.61,
+          "mpe": 5.17,
+          "rmse": 2.38
+        },
+        "mae_reduction_pct": 70.6
+      },
+      "fat_g": {
+        "label": "Fat (g)",
+        "zero_shot": {
+          "mae": 16.04,
+          "mpe": 30.16,
+          "rmse": 27.12
+        },
+        "messmate": {
+          "mae": 2.77,
+          "mpe": 5.39,
+          "rmse": 4.73
+        },
+        "mae_reduction_pct": 82.7
+      },
+      "carb_g": {
+        "label": "Carbohydrates (g)",
+        "zero_shot": {
+          "mae": 18.12,
+          "mpe": 18.26,
+          "rmse": 28.06
+        },
+        "messmate": {
+          "mae": 4.48,
+          "mpe": 4.69,
+          "rmse": 6.55
+        },
+        "mae_reduction_pct": 75.3
+      }
+    },
+    "Mediterranean": {
+      "kcal": {
+        "label": "Calories (kcal)",
+        "zero_shot": {
+          "mae": 185.09,
+          "mpe": 23.5,
+          "rmse": 259.23
+        },
+        "messmate": {
+          "mae": 40.61,
+          "mpe": 5.68,
+          "rmse": 52.43
+        },
+        "mae_reduction_pct": 78.1
+      },
+      "protein_g": {
+        "label": "Protein (g)",
+        "zero_shot": {
+          "mae": 9.23,
+          "mpe": 22.1,
+          "rmse": 13.86
+        },
+        "messmate": {
+          "mae": 2.51,
+          "mpe": 6.16,
+          "rmse": 3.72
+        },
+        "mae_reduction_pct": 72.8
+      },
+      "fat_g": {
+        "label": "Fat (g)",
+        "zero_shot": {
+          "mae": 10.99,
+          "mpe": 32.82,
+          "rmse": 15.65
+        },
+        "messmate": {
+          "mae": 1.98,
+          "mpe": 5.85,
+          "rmse": 2.67
+        },
+        "mae_reduction_pct": 82.0
+      },
+      "carb_g": {
+        "label": "Carbohydrates (g)",
+        "zero_shot": {
+          "mae": 15.2,
+          "mpe": 20.24,
+          "rmse": 22.68
+        },
+        "messmate": {
+          "mae": 4.43,
+          "mpe": 6.01,
+          "rmse": 5.7
+        },
+        "mae_reduction_pct": 70.9
+      }
+    }
+  }
+}
